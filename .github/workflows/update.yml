@@ -29,7 +29,7 @@ jobs:
       - name: Тесты разбора
         run: python -m pytest -q pipeline/tests
       - name: Скачать и разобрать
-        run: python pipeline/run.py
+        run: python pipeline/run.py --except=bseu   # БГЭУ — в bseu.yml, дважды в день
       - name: Сохранить, если что-то поменялось
         run: |
           git config user.name "soloweek-bot"
@@ -37,4 +37,5 @@ jobs:
           git add feeds state
           if git diff --cached --quiet; then echo "Без изменений"; exit 0; fi
           git commit -m "Расписания: $(date -u +'%Y-%m-%d %H:%M') UTC"
+          git pull --rebase -q
           git push

@@ -1,0 +1,28 @@
+{
+ "format": "soloweek-feed",
+ "version": 1,
+ "id": "bsu-fir",
+ "courses": [
+  {
+   "name": "1 курс",
+   "id": "bsu-fir/1",
+   "groups": 26
+  },
+  {
+   "name": "2 курс",
+   "id": "bsu-fir/2",
+   "groups": 23
+  },
+  {
+   "name": "3 курс",
+   "id": "bsu-fir/3",
+   "groups": 19
+  },
+  {
+   "name": "4 курс",
+   "id": "bsu-fir/4",
+   "groups": 18
+  }
+ ],
+ "updatedAt": "2026-11-18T19:20:10Z"
+}

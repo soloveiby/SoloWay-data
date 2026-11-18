@@ -1,0 +1,328 @@
+{
+ "format": "soloweek-feed",
+ "version": 1,
+ "id": "bseu",
+ "week1": "2026-08-31",
+ "faculties": [
+  {
+   "id": "12",
+   "slug": "uef",
+   "name": "Учётно-экономический факультет",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-uef/1",
+     "groups": 8
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-uef/2",
+     "groups": 7
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-uef/3",
+     "groups": 7
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-uef/4",
+     "groups": 7
+    }
+   ]
+  },
+  {
+   "id": "14",
+   "slug": "fkti",
+   "name": "Факультет коммерции и туристической индустрии",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fkti/1",
+     "groups": 10
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fkti/2",
+     "groups": 11
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fkti/3",
+     "groups": 12
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fkti/4",
+     "groups": 13
+    }
+   ]
+  },
+  {
+   "id": "263",
+   "slug": "fmbk",
+   "name": "Факультет международного бизнеса и коммуникаций",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fmbk/1",
+     "groups": 2
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fmbk/2",
+     "groups": 3
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fmbk/3",
+     "groups": 6
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fmbk/4",
+     "groups": 4
+    },
+    {
+     "name": "5 курс",
+     "id": "bseu-fmbk/5",
+     "groups": 4
+    }
+   ]
+  },
+  {
+   "id": "13",
+   "slug": "fmk",
+   "name": "Факультет маркетинга и логистики",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fmk/1",
+     "groups": 11
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fmk/2",
+     "groups": 9
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fmk/3",
+     "groups": 8
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fmk/4",
+     "groups": 9
+    }
+   ]
+  },
+  {
+   "id": "7",
+   "slug": "fmeo",
+   "name": "Факультет международных экономических отношений",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fmeo/1",
+     "groups": 9
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fmeo/2",
+     "groups": 9
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fmeo/3",
+     "groups": 10
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fmeo/4",
+     "groups": 10
+    }
+   ]
+  },
+  {
+   "id": "2",
+   "slug": "fp",
+   "name": "Факультет права",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fp/1",
+     "groups": 6
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fp/2",
+     "groups": 6
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fp/3",
+     "groups": 6
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fp/4",
+     "groups": 7
+    }
+   ]
+  },
+  {
+   "id": "8",
+   "slug": "ffbd",
+   "name": "Факультет финансов и банковского дела",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-ffbd/1",
+     "groups": 13
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-ffbd/2",
+     "groups": 14
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-ffbd/3",
+     "groups": 14
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-ffbd/4",
+     "groups": 14
+    }
+   ]
+  },
+  {
+   "id": "534",
+   "slug": "fce",
+   "name": "Факультет цифровой экономики",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fce/1",
+     "groups": 4
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fce/2",
+     "groups": 4
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fce/3",
+     "groups": 4
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fce/4",
+     "groups": 4
+    }
+   ]
+  },
+  {
+   "id": "11",
+   "slug": "fem",
+   "name": "Факультет экономики и менеджмента",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-fem/1",
+     "groups": 10
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-fem/2",
+     "groups": 11
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-fem/3",
+     "groups": 11
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-fem/4",
+     "groups": 12
+    }
+   ]
+  },
+  {
+   "id": "432",
+   "slug": "sef",
+   "name": "СЭФ",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-sef/1",
+     "groups": 3
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-sef/2",
+     "groups": 2
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-sef/3",
+     "groups": 3
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-sef/4",
+     "groups": 4
+    }
+   ]
+  },
+  {
+   "id": "535",
+   "slug": "sb",
+   "name": "СБ",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-sb/1",
+     "groups": 10
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-sb/2",
+     "groups": 10
+    },
+    {
+     "name": "3 курс",
+     "id": "bseu-sb/3",
+     "groups": 10
+    },
+    {
+     "name": "4 курс",
+     "id": "bseu-sb/4",
+     "groups": 5
+    }
+   ]
+  },
+  {
+   "id": "129",
+   "slug": "mag",
+   "name": "Магистратура",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "bseu-mag/1",
+     "groups": 30
+    },
+    {
+     "name": "2 курс",
+     "id": "bseu-mag/2",
+     "groups": 2
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-11-18T18:54:27Z"
+}

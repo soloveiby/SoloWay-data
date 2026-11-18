@@ -1,0 +1,11 @@
+{
+ "id": "bsu-fir",
+ "name": "БГУ · Факультет международных отношений",
+ "adapter": "pdf_week_grid",
+ "base": "https://fir.bsu.by",
+ "pattern": "/images/timetable/{name}_timetable.pdf",
+ "page": "https://fir.bsu.by/students/timetable-in-menu",
+ "files": ["IR", "IR2", "WE", "IL", "IC", "CA", "ILOG", "ITG", "V", "AF"],
+ "semester": {"start": "2026-09-01", "end": "2026-12-26"},
+ "everyHours": 6
+}
