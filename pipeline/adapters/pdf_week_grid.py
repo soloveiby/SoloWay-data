@@ -36,7 +36,7 @@ def day_of(raw: str) -> int | None:
     return None
 GROUP = re.compile(r"^Группа\s*(\d+\s*[А-ЯA-Z]?)\s*(\((?:в|вост)\))?", re.I)
 COURSE = re.compile(r"(\d)\s*(?:-?\s*й\s*)?курс|(\d)(?:st|nd|rd|th|d)\s+Academic year", re.I)
-SPEC = re.compile(r"Специальность\s+([\d\- ]+)\s+(.+)")
+SPEC = re.compile(r"(?:Специальность|Speciality)\s*([\d\s\-–—]+?)\s*([А-ЯЁA-Za-zа-яё«\"].+)")
 FROM = re.compile(r"(?:^|\s)(?:[СсCc]|Since|since)\s*(\d{1,2})\.(\d{1,2})\s*[-–—]?\s*")
 RANGE = re.compile(r"^\s*(?:[СсCc]|Since|since)\s*(\d{1,2})\.(\d{1,2})\s*[-–—]\s*(\d{1,2})\.(\d{1,2})\s*[-–—]?\s*")
 UNTIL = re.compile(r"\s*\(?\s*(?:по|до)\s*(\d{1,2})\.(\d{1,2})\s*\)?")
@@ -214,7 +214,12 @@ def parse_pdf(path: str, vocab: Vocabulary, single: str | None = None) -> list[C
                 cm = COURSE.search(text)        # магистратура: «(3-й семестр, 2-й курс)», «2nd Academic year»
             number = int(cm.group(1) or cm.group(2)) if cm else (int(code.group(1)) if code else (1 if single and cur is None else None))
             if number is not None and (cur is None or cur.number != number):
-                spec = re.sub(r"\s*\(.*?\)\s*$", "", sm.group(2)).strip().capitalize() if sm else (cur.specialty if cur else "")
+                spec = (sm.group(2) if sm else (cur.specialty if cur else ""))
+                spec = re.sub(r"_+\s*\d{0,4}\s*г?\.?|\s*\((?:\d|1 поток|2 поток)[^)]*\)|\s{2,}.*$", "", spec).strip(" ,.–-«»\"")
+                spec = spec[:1].upper() + spec[1:].lower() if spec.isupper() else spec
+                # хвосты из соседней колонки шапки: подпись проректора, «…and Educational Innovations»
+                spec = re.sub(r"^Code:.*?Speciality\s*[–—-]\s*", "", spec)
+                spec = re.sub(r"\s+and Educational Innovations.*$|\s+[А-ЯЁ]\.\s?[А-ЯЁ]\.\s*[А-ЯЁ][а-яё]+$|\s+(?:Проректор|Vice-Rector).*$", "", spec).strip(" ,.–-")
                 cur = Course(number, spec, [], [])
                 courses.append(cur)
                 groups_x = []
