@@ -1,0 +1,29 @@
+{
+ "format": "soloweek-feed",
+ "version": 1,
+ "id": "bsu-mmf",
+ "week1": "2026-08-31",
+ "courses": [
+  {
+   "name": "1 курс",
+   "id": "bsu-mmf/1",
+   "groups": 11
+  },
+  {
+   "name": "2 курс",
+   "id": "bsu-mmf/2",
+   "groups": 12
+  },
+  {
+   "name": "3 курс",
+   "id": "bsu-mmf/3",
+   "groups": 10
+  },
+  {
+   "name": "4 курс",
+   "id": "bsu-mmf/4",
+   "groups": 11
+  }
+ ],
+ "updatedAt": "2026-11-18T20:53:51Z"
+}

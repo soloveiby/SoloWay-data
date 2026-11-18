@@ -441,7 +441,119 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
     return log
 
 
-ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid}
+# ───────────────────────── HTML-таблица на группу (мехмат БГУ) ─────────────────────────
+
+def run_html_groups(cfg: dict, offline: bool) -> list[str]:
+    from adapters import html_group_table as H
+    sid = cfg["id"]
+    state = ROOT / "state" / sid
+    pages = state / "pages"; pages.mkdir(parents=True, exist_ok=True)
+    meta_path = state / "meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+    log: list[str] = []
+    now = datetime.now(timezone.utc)
+    last = meta.get("lastRun")
+    if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 3) * 3600:
+        return []
+
+    def download():
+        seen: dict[str, dict] = {}
+        for n in cfg["courses"]:
+            links = H.group_links(fetch(cfg["coursePattern"].format(n=n)).decode("utf-8", "replace"))
+            if not links:
+                raise RuntimeError(f"{sid}: на странице {n} курса нет ни одной группы — сайт поменялся?")
+            for url, label in links:
+                slug = f"{n}-" + url.rstrip("/").rsplit("/", 1)[-1]
+                # храним только блок с таблицей: шапка и подвал сайта меняются сами по себе и давали бы лишние коммиты
+                data = H.content(fetch(url).decode("utf-8", "replace")).encode("utf-8")
+                sha = hashlib.sha256(data).hexdigest()
+                if meta.get("pages", {}).get(slug, {}).get("sha") != sha:
+                    (pages / f"{slug}.html").write_bytes(data)
+                    log.append(f"{sid}: обновлена {label.split('  ')[0][:40]} ({n} курс)")
+                seen[slug] = {"course": n, "sha": sha}
+                _time.sleep(0.7)
+        for slug in set(meta.get("pages", {})) - set(seen):          # группы, которых больше нет на сайте
+            (pages / f"{slug}.html").unlink(missing_ok=True)
+        meta["pages"] = seen
+        meta["lastRun"] = now.isoformat()
+        dump(meta_path, meta)
+
+    if not offline:
+        try:
+            network(sid, meta_path, download)
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else meta
+
+    start, end = date.fromisoformat(cfg["semester"]["start"]), date.fromisoformat(cfg["semester"]["end"])
+    week1 = start - timedelta(days=start.weekday())                  # «1н» — неделя, в которой 1 сентября
+
+    def d(dm):
+        if not dm: return None
+        y = start.year if dm[1] >= start.month else start.year + 1
+        try: return date(y, dm[1], dm[0])
+        except ValueError: return None
+
+    def lesson_on(l, day: date) -> bool:
+        if l.only is not None:
+            return day in {x for x in map(d, l.only) if x}
+        if l.parity and ((day - week1).days // 7) % 2 + 1 != l.parity: return False
+        if d(l.since) and day < d(l.since): return False
+        if d(l.until) and day > d(l.until): return False
+        return day not in {d(x) for x in l.skip}
+
+    by_course: dict[int, list] = {}
+    for slug, info in meta.get("pages", {}).items():
+        f = pages / f"{slug}.html"
+        if not f.exists(): continue
+        g = H.parse_group_page(f.read_text(encoding="utf-8", errors="replace"))
+        if g and g.lessons: by_course.setdefault(info["course"], []).append(g)
+
+    out = ROOT / "feeds" / sid
+    courses = []
+    for course, groups in sorted(by_course.items()):
+        groups.sort(key=lambda g: (0, int(g.name.split()[-1])) if g.name.split()[-1].isdigit() else (1, g.name))
+        glist = [{"index": i, "name": g.name, "code": "", "specialty": g.specialty, "profiles": []} for i, g in enumerate(groups)]
+        weeks = []
+        monday = week1
+        while monday <= end:
+            days = []
+            for wd in range(6):
+                day = monday + timedelta(days=wd)
+                per: dict[str, list] = {}
+                if start <= day <= end:
+                    for gi, g in enumerate(groups):
+                        for l in g.lessons:
+                            if l.weekday == wd and lesson_on(l, day):
+                                per.setdefault(str(gi), []).append({
+                                    "start": l.start.strftime("%H:%M"), "end": l.end.strftime("%H:%M"), "title": l.title,
+                                    "type": l.type, "teachers": l.teachers, "rooms": l.rooms, "tags": l.tags,
+                                    "details": l.details, "cancelled": False, "sharedWith": [gi]})
+                    # общая лекция потока: у нескольких групп одно и то же занятие — отмечаем, с кем вместе
+                    same: dict[tuple, list[int]] = {}
+                    for gi, ls in per.items():
+                        for x in ls:
+                            same.setdefault((x["start"], x["title"], x["type"], tuple(x["teachers"]), tuple(x["rooms"]), tuple(x["tags"])), []).append(int(gi))
+                    for ls in per.values():
+                        for x in ls:
+                            x["sharedWith"] = sorted(same[(x["start"], x["title"], x["type"], tuple(x["teachers"]), tuple(x["rooms"]), tuple(x["tags"]))])
+                        ls.sort(key=lambda x: (x["start"], x["tags"]))
+                days.append({"date": day.isoformat(), "lessons": per})
+            weeks.append({"title": week_title([monday, monday + timedelta(days=5)]), "groups": glist, "days": days})
+            monday += timedelta(weeks=1)
+        if dump(out / f"{course}.json", {"format": "soloweek-schedule", "version": 1, "weeks": weeks}, compact=True):
+            log.append(f"{sid}: {course} курс — файл обновлён")
+        courses.append({"name": f"{course} курс", "id": f"{sid}/{course}", "groups": len(groups)})
+    if not courses:
+        raise RuntimeError(f"{sid}: ни одной группы не разобралось")
+    old = json.loads((out / "index.json").read_text(encoding="utf-8")) if (out / "index.json").exists() else {}
+    index = {"format": "soloweek-feed", "version": 1, "id": sid, "week1": week1.isoformat(), "courses": courses}
+    index["updatedAt"] = old.get("updatedAt") if not log and old.get("courses") == courses else now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    dump(out / "index.json", index)
+    return log
+
+
+ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid, "html_group_table": run_html_groups}
 
 
 def main():

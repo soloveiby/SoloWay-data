@@ -1,0 +1,13 @@
+{
+ "id": "bsu-mmf",
+ "name": "БГУ · Механико-математический факультет",
+ "adapter": "html_group_table",
+ "page": "https://mmf.bsu.by/ru/raspisanie-zanyatij/",
+ "coursePattern": "https://mmf.bsu.by/ru/raspisanie-zanyatij/dnevnoe-otdelenie/{n}-kurs/",
+ "courses": [1, 2, 3, 4],
+ "semester": {
+  "start": "2026-09-01",
+  "end": "2027-01-02"
+ },
+ "everyHours": 3
+}
