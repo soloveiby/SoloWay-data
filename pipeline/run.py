@@ -27,7 +27,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from adapters.pdf_daily_grid import DaySchedule, Vocabulary, feed_pdf, parse_pdf  # noqa: E402
 
-UA = "SoloWeek-schedule-bot (+https://github.com/soloveiby/SoloWeek-data)"
+UA = "SoloWay-schedule-bot (+https://github.com/soloveiby/SoloWay-data)"
 MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
 
 

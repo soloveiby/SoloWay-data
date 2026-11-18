@@ -1,6 +1,6 @@
-# SoloWeek — данные расписаний
+# SoloWay — данные расписаний
 
-Конвертер, который превращает расписания учебных заведений в формат приложения [SoloWeek](https://github.com/soloveiby/SoloWeek-releases).
+Конвертер, который превращает расписания учебных заведений в формат приложения [SoloWay](https://github.com/soloveiby/SoloWay-releases).
 Работает на GitHub Actions каждые 30 минут — своего сервера нет.
 
 ```
