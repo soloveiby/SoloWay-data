@@ -21,10 +21,24 @@ from adapters.pdf_daily_grid import Line, Vocabulary, _join, _lines, feed_pdf  #
 
 TIME = re.compile(r"(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})")
 DAYS = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота"]
+DAYS_EN = ["mo", "tu", "we", "th", "fr", "sa"]
+
+
+def day_of(raw: str) -> int | None:
+    """День из ячейки первой колонки: «П/о/н/е…» в любом порядке букв (вертикальный текст), «Понедел ьник», «Mo»."""
+    letters = re.sub(r"[^а-яёa-z]", "", raw.lower())
+    for i, n in enumerate(DAYS):
+        if sorted(letters) == sorted(n) or letters.startswith(n[:5]) or letters[::-1].startswith(n[:5]):
+            return i
+    for i, n in enumerate(DAYS_EN):
+        if letters[:2] == n or letters[:3] in ("mon", "tue", "wed", "thu", "fri", "sat")[i:i + 1]:
+            return i
+    return None
 GROUP = re.compile(r"^Группа\s*(\d+\s*[А-ЯA-Z]?)\s*(\((?:в|вост)\))?", re.I)
-COURSE = re.compile(r"(\d)\s*курс")
+COURSE = re.compile(r"(\d)\s*(?:-?\s*й\s*)?курс|(\d)(?:st|nd|rd|th|d)\s+Academic year", re.I)
 SPEC = re.compile(r"Специальность\s+([\d\- ]+)\s+(.+)")
-FROM = re.compile(r"(?:^|\s)[Сс]\s*(\d{1,2})\.(\d{1,2})\s*[-–—]?\s*")
+FROM = re.compile(r"(?:^|\s)(?:[СсCc]|Since|since)\s*(\d{1,2})\.(\d{1,2})\s*[-–—]?\s*")
+RANGE = re.compile(r"^\s*(?:[СсCc]|Since|since)\s*(\d{1,2})\.(\d{1,2})\s*[-–—]\s*(\d{1,2})\.(\d{1,2})\s*[-–—]?\s*")
 UNTIL = re.compile(r"\s*\(?\s*(?:по|до)\s*(\d{1,2})\.(\d{1,2})\s*\)?")
 OWN_TIME = re.compile(r"(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})\s*[-–—]\s*")
 # конец записи: « – 913», « – 8а, холл», « – 1118»
@@ -76,7 +90,9 @@ class Course:
     lessons: list[Lesson]
 
 
-def _t(h, m): return time(int(h), int(m))
+def _t(h, m):
+    try: return time(int(h), int(m))
+    except ValueError: return None       # «14.70» — опечатка в расписании
 
 
 def norm_group(text: str) -> str | None:
@@ -110,24 +126,34 @@ def parse_cell(text: str):
         pos = m.end()
         since = until = own = None
         only = None; skip = []; notes = []
+        rg = RANGE.match(body)
+        if rg:
+            since, until = (int(rg[1]), int(rg[2])), (int(rg[3]), int(rg[4])); body = body[rg.end():]
         for sk in SKIP.finditer(body):
             skip += dates_list(sk.group(1) or sk.group(2))
         body = SKIP.sub(" ", body)
         zm = re.match(r"^\s*(\d{1,2}\.\d{1,2})\s*(зач[её]т|экзамен)\s+", body, re.I)
         if zm: notes.append(f"{zm.group(1)} — {zm.group(2).lower()}"); body = body[zm.end():]
-        om = ONLY.search(body.strip())
+        zw = re.match(r"^\s*(зач[её]т|экзамен)\s+", body, re.I)        # «зачет С 24.11 – …»
+        if zw:
+            notes.append(zw.group(1).lower()); body = body[zw.end():]
+            rg = RANGE.match(body)
+            if rg: since, until = (int(rg[1]), int(rg[2])), (int(rg[3]), int(rg[4])); body = body[rg.end():]
+        om = ONLY.search(body.strip()) or re.match(r"^\(?\s*(" + DATES + r")\s+(?=[А-ЯЁA-Z])", body.strip())
         if om and "." in om.group(1):
             only = dates_list(om.group(1)); body = body.strip()[om.end():]
         for n in NOTE.findall(body):
             if re.search(r"\d{1,2}\.\d{1,2}|недел|семинар|лекци|зачет|ЗАЧЕТ|ДО\b", n):
                 notes.append(n.strip("() ")); body = body.replace(n, " ")
-        f = FROM.search(body)
+        f = FROM.search(body) if since is None else None
         if f and f.start() <= 2 or (f and header is None and body[:f.start()].strip() == ""):
             since = (int(f.group(1)), int(f.group(2))); body = body[:f.start()] + " " + body[f.end():]
         u = UNTIL.search(body)
         if u: until = (int(u.group(1)), int(u.group(2))); body = body[:u.start()] + " " + body[u.end():]
         o = OWN_TIME.search(body)
-        if o: own = (_t(o[1], o[2]), _t(o[3], o[4])); body = body[:o.start()] + " " + body[o.end():]
+        if o:
+            body = body[:o.start()] + " " + body[o.end():]
+            if _t(o[1], o[2]) and _t(o[3], o[4]): own = (_t(o[1], o[2]), _t(o[3], o[4]))
         body = _clean(body)
         # языковая подгруппа: «Иностранный язык … Англ.1 Тозик О.В.» — заголовок до метки языка
         tag = None
@@ -167,7 +193,8 @@ def parse_cell(text: str):
     return entries
 
 
-def parse_pdf(path: str, vocab: Vocabulary) -> list[Course]:
+def parse_pdf(path: str, vocab: Vocabulary, single: str | None = None) -> list[Course]:
+    """[single] — имя «группы» для PDF с одной колонкой (магистратура: одна программа на файл)."""
     courses: list[Course] = []
     cur: Course | None = None
     groups_x: list[tuple[float, float, str]] = []
@@ -183,13 +210,21 @@ def parse_pdf(path: str, vocab: Vocabulary) -> list[Course]:
             table = max(tables, key=lambda t: len(t.cells))
             cells = [(c, _lines(page, c)) for c in table.cells]
             heads = [(c, norm_group(" ".join(ls))) for c, ls in cells if ls and norm_group(" ".join(ls))]
-            number = int(cm.group(1)) if cm else (int(code.group(1)) if code else None)
+            if not cm and single and cur is None:
+                cm = COURSE.search(text)        # магистратура: «(3-й семестр, 2-й курс)», «2nd Academic year»
+            number = int(cm.group(1) or cm.group(2)) if cm else (int(code.group(1)) if code else (1 if single and cur is None else None))
             if number is not None and (cur is None or cur.number != number):
                 spec = re.sub(r"\s*\(.*?\)\s*$", "", sm.group(2)).strip().capitalize() if sm else (cur.specialty if cur else "")
                 cur = Course(number, spec, [], [])
                 courses.append(cur)
                 groups_x = []
             if cur is None: continue
+            if not heads and single:
+                # одна колонка: самая широкая ячейка шапки над расписанием
+                top = [c for c, ls in cells if ls and re.search(r"Профилиз|Profiling|Name of subject|Специальность|Speciality", " ".join(ls))]
+                if top:
+                    c = max(top, key=lambda c: c[2] - c[0])
+                    heads = [(c, single)]
             if heads:
                 groups_x = sorted([(c[0], c[2], g) for c, g in heads])
                 for _, _, g in groups_x:
@@ -201,12 +236,10 @@ def parse_pdf(path: str, vocab: Vocabulary) -> list[Course]:
             for c, ls in cells:
                 if not ls: continue
                 if c[2] <= gx0 + 1:
-                    raw = "".join(str(l) for l in ls).replace(" ", "")
-                    word = raw[::-1].lower()
-                    d = next((i for i, n in enumerate(DAYS) if word.startswith(n[:5]) or raw.lower().startswith(n[:5])), None)
-                    if d is not None: days.append((c[1], c[3], d)); continue
+                    d = day_of("".join(str(l) for l in ls))
+                    if d is not None and not TIME.search(" ".join(ls)): days.append((c[1], c[3], d)); continue
                     tm = TIME.search(" ".join(ls))
-                    if tm: slots.append((c[1], c[3], _t(tm[1], tm[2]), _t(tm[3], tm[4])))
+                    if tm and _t(tm[1], tm[2]) and _t(tm[3], tm[4]): slots.append((c[1], c[3], _t(tm[1], tm[2]), _t(tm[3], tm[4])))
             for c, ls in cells:
                 if not ls or c[0] < gx0 - 1: continue
                 cy = (c[1] + c[3]) / 2

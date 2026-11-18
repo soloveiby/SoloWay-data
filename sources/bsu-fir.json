@@ -5,7 +5,23 @@
  "base": "https://fir.bsu.by",
  "pattern": "/images/timetable/{name}_timetable.pdf",
  "page": "https://fir.bsu.by/students/timetable-in-menu",
- "files": ["IR", "IR2", "WE", "IL", "IC", "CA", "ILOG", "ITG", "V", "AF"],
- "semester": {"start": "2026-09-01", "end": "2026-12-26"},
- "everyHours": 6
+ "files": [
+  "IR",
+  "IR2",
+  "WE",
+  "IL",
+  "IC",
+  "CA",
+  "ILOG",
+  "ITG",
+  "V",
+  "AF"
+ ],
+ "semester": {
+  "start": "2026-09-01",
+  "end": "2026-12-26"
+ },
+ "everyHours": 6,
+ "mastersLink": "<a[^>]+href=\"/images/timetable/(?P<file>(?:magistr|timatable|timetable_magistr)[A-Za-z0-9_\\-]*)\\.pdf\"[^>]*>(?P<text>.*?)</a>",
+ "mastersPattern": "/images/timetable/{name}.pdf"
 }

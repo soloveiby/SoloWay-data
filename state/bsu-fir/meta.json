@@ -9,7 +9,39 @@
   "ILOG": "ba558b6ca25d44d70ab8d3a7ab33cdb7b162b8f48ccb982cc9625e2abe65cd88",
   "ITG": "4ead35de45f531b82de1a013a3fae1ee18217be48d23f7d8958c0c57769e4a7e",
   "V": "922e252fb65e689c73ac5d38a7fe66095ec14928c69a19f22c538d9fa45526b1",
-  "AF": "d31d9fd9138e84c165a8873173d3b5c4acd4ab75b37220a225fa1d340340e15e"
+  "AF": "d31d9fd9138e84c165a8873173d3b5c4acd4ab75b37220a225fa1d340340e15e",
+  "magistr_timetable_IR_1": "7592a9a386b98bb4b8eab8c9e0d1bc422a87fe8844c060165a73e36de1910bc1",
+  "magistr_timetable_IR_2": "369f5a8b4107656c89f5dc7e714a711ffc90fb2c0582964ffec959e9cd84491c",
+  "magistr_timetable_Jurisprudence": "bfb874c240b9f520e57170efd6ebd6b8293106f983411d849f8364fe4b884bf0",
+  "magistr_timetable_2_WE": "e763ee4cf4d5301adf56f9c092e5dcb8ec24170e8a87a44086e2d705cf954fb7",
+  "timatable_1_WE": "08c9ac6b014bfeb9607287819239d68ac7c111330bd19a9c3f53715efb181e73",
+  "magistr_timetable_2_WE-2": "5e968777072a16ad084d5e2b2919d4277e2c9019f7767e0a12e2ad81888dd585",
+  "magistr_timetable_mened": "01968c53d7f498853d77ed638481291843f4496a3599a7bdc263f4cc678c5b6b",
+  "magistr_timetable_MSES": "2ef6a93138871859bfb71cd45c0b3420a84441d9b5f1a7169974583ec0f5c158",
+  "magistr_timetable_Vostok": "88829ce84f36f6c518c98c2921777d3394ad68e2584f20f7cbe4b454a12150fd",
+  "timetable_magistr_IR_en_2nd_": "9d556e287e2ab6450eee92fa1a46a57a37e1d1f7506d51f97ba2f20db4b07281",
+  "magistr_timetable_WE": "eb50fb3550c8d60232c97e16c7cc924dc69b770dc1313cf2b6dd6bb92af4cce7",
+  "timatable_1_WE-1": "b35041d91ed2a61e640917f90b1629560717792c2bc0565bd967bf16f3886276",
+  "timatable_1_WE-2": "881692639fe46138e4011970c5358c601425deba45c778b0a9e8483bf9fb1adf",
+  "magistr_Management27": "81ac2038386802825ad95ef6f1e57e3f4607d1dc334efa3cb07583472a252e50",
+  "magistr_Jurisprudence_Business1": "6593551806cae15321e1cf2a0da76d74bcb80449714097032edaaa129b966a79"
  },
- "lastRun": "2026-11-18T19:18:11.131769+00:00"
+ "masters": {
+  "magistr_timetable_IR_1": "Глобальные тренды современного Китая",
+  "magistr_timetable_IR_2": "Международные процессы и глобальная политика",
+  "magistr_timetable_Jurisprudence": "Международное право",
+  "magistr_timetable_2_WE": "Мировая экономика",
+  "timatable_1_WE": "Государственное управление в международном экономическом сотрудничестве",
+  "magistr_timetable_2_WE-2": "Государственное управление в международном экономическом сотрудничестве",
+  "magistr_timetable_mened": "Менеджмент массовых событийных мероприятий",
+  "magistr_timetable_MSES": "Международная логистика",
+  "magistr_timetable_Vostok": "Деловая коммуникация со странами Азии",
+  "timetable_magistr_IR_en_2nd_": "International Trends and Global Politics (EN)",
+  "magistr_timetable_WE": "Мировая экономика",
+  "timatable_1_WE-1": "International Trade (Economics, Politics, Law) (EN)",
+  "timatable_1_WE-2": "International Trade (Economics, Politics, Law) (EN)",
+  "magistr_Management27": "International tourism and hospitality (EN)",
+  "magistr_Jurisprudence_Business1": "International Business Law (EN)"
+ },
+ "lastRun": "2026-11-18T19:42:57.736677+00:00"
 }

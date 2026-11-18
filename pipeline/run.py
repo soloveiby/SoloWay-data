@@ -297,9 +297,27 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
     if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 6) * 3600:
         return []
     if not offline:
+        # магистратура: файлы и названия программ берём из ссылок на странице факультета
+        if cfg.get("mastersLink"):
+            page = fetch(cfg["page"]).decode("utf-8", "replace")
+            labels = {}
+            for m in re.finditer(cfg["mastersLink"], page):
+                text = re.sub(r"<[^>]+>|&nbsp;", " ", m.group("text"))
+                text = re.sub(r"\s+", " ", text).strip()
+                prof = re.search(r"«([^»]+)", text)                     # профилизация в «ёлочках»
+                spec = re.search(r"(?:[Сс]пециальность|Speciality)\s*\"([^\"]+)\"", text)
+                label = prof.group(1).strip() if prof else (spec.group(1) if spec else text)
+                if text.startswith("Speciality"):
+                    pr = re.search(r"Profiling:?\s*[«\"]?([^»\"]+)", text)
+                    label = (pr.group(1) if pr else (spec.group(1) if spec else text))
+                    label = re.sub(r"\s*,?\s*\([^()]*(?:Semester|Academic)[^()]*\)?", "", label).strip(" ,.") + " (EN)"
+                labels[m.group("file")] = label[:80]
+            meta["masters"] = labels
+        files_all = list(cfg["files"]) + list(meta.get("masters", {}))
         # PDF лежат по постоянным адресам и перезаливаются — сверяем содержимое
-        for name in cfg["files"]:
-            data = fetch(cfg["base"] + cfg["pattern"].format(name=name))
+        for name in files_all:
+            url = cfg["base"] + (cfg["pattern"].format(name=name) if name in cfg["files"] else cfg["mastersPattern"].format(name=name))
+            data = fetch(url)
             sha = hashlib.sha256(data).hexdigest()
             if meta.get("sha", {}).get(name) != sha:
                 (pdf_dir / f"{name}.pdf").write_bytes(data)
@@ -308,9 +326,11 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
             _time.sleep(1)
         meta["lastRun"] = now.isoformat()
         dump(meta_path, meta)
+    masters = meta.get("masters", {})
     files = [pdf_dir / f"{n}.pdf" for n in cfg["files"] if (pdf_dir / f"{n}.pdf").exists()]
+    mfiles = [(pdf_dir / f"{n}.pdf", label) for n, label in masters.items() if (pdf_dir / f"{n}.pdf").exists()]
     vocab = Vocabulary()
-    for f in files: feed_pdf(str(f), vocab)
+    for f in files + [m[0] for m in mfiles]: feed_pdf(str(f), vocab)
     start, end = date.fromisoformat(cfg["semester"]["start"]), date.fromisoformat(cfg["semester"]["end"])
     def d(dm):
         """(день, месяц) → дата в этом семестре; кривые («12.50» — это время) — None."""
@@ -318,18 +338,19 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
         y = start.year if dm[1] >= start.month else start.year + 1
         try: return date(y, dm[1], dm[0])
         except ValueError: return None
-    by_course: dict[int, dict[str, dict]] = {}
-    for f in files:
-        for c in W.parse_pdf(str(f), vocab):
-            groups = by_course.setdefault(c.number, {})
+    by_course: dict[str, dict[str, dict]] = {}
+    jobs = [(f, None, "") for f in files] + [(f, label, "m") for f, label in mfiles]
+    for f, single, prefix in jobs:
+        for c in W.parse_pdf(str(f), vocab, single=single):
+            groups = by_course.setdefault(f"{prefix}{c.number}", {})
             for g in c.groups:
                 groups.setdefault(g, {"spec": c.specialty, "lessons": []})
             for l in c.lessons:
                 groups.setdefault(l.group, {"spec": c.specialty, "lessons": []})["lessons"].append(l)
     out = ROOT / "feeds" / sid
     courses = []
-    for course, groups in sorted(by_course.items()):
-        names = sorted(groups, key=lambda g: (int(re.search(r"\d+", g).group(0)) if re.search(r"\d+", g) else 999, g))
+    for course, groups in sorted(by_course.items(), key=lambda kv: (kv[0].startswith("m"), kv[0])):
+        names = sorted(groups, key=lambda g: (int(re.search(r"\d+", g).group(0)) if re.match(r"Группа", g) else 999, g))
         glist = [{"index": i, "name": g, "code": "", "specialty": groups[g]["spec"], "profiles": []} for i, g in enumerate(names)]
         weeks = []
         monday = start - timedelta(days=start.weekday())
@@ -357,7 +378,8 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
             monday += timedelta(weeks=1)
         if dump(out / f"{course}.json", {"format": "soloweek-schedule", "version": 1, "weeks": weeks}, compact=True):
             log.append(f"{sid}: {course} курс — файл обновлён")
-        courses.append({"name": f"{course} курс", "id": f"{sid}/{course}", "groups": len(names)})
+        title = f"Магистратура · {course[1:]} курс" if course.startswith("m") else f"{course} курс"
+        courses.append({"name": title, "id": f"{sid}/{course}", "groups": len(names)})
     old = json.loads((out / "index.json").read_text(encoding="utf-8")) if (out / "index.json").exists() else {}
     index = {"format": "soloweek-feed", "version": 1, "id": sid, "courses": courses}
     index["updatedAt"] = old.get("updatedAt") if not log and old.get("courses") == courses else now.strftime("%Y-%m-%dT%H:%M:%SZ")
