@@ -1,0 +1,28 @@
+name: Проверка доступности сайта
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "Адреса через пробел"
+        required: true
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Откуда идём
+        run: curl -sS -m 10 https://ipinfo.io/json | grep -E '"(country|org|city)"' || true
+      - name: Запросы
+        env:
+          URLS: ${{ inputs.urls }}
+        run: |
+          for u in $URLS; do
+            for ua in "SoloWay-schedule-bot (+https://github.com/soloveiby/SoloWay-data)" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"; do
+              code=$(curl -sS -L -m 40 -A "$ua" -o page.html -w "%{http_code} %{size_download}" "$u" || echo "ошибка")
+              echo "$u | ${ua:0:12} -> $code"
+            done
+            grep -o -i -E 'href="[^"]+\.(docx?|xlsx?|pdf)"' page.html | sort -u | head -80 || true
+            echo "-----"
+          done
