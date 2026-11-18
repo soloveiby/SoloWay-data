@@ -1,0 +1,10 @@
+{
+ "id": "mrk",
+ "name": "Минский радиотехнический колледж",
+ "adapter": "pdf_daily_grid",
+ "page": "https://mrk.bsuir.by/ru/schedule/",
+ "base": "https://mrk.bsuir.by",
+ "link": "/mediafiles/schedule/(?P<date>\\d{2}\\.\\d{2}\\.\\d{4})-[0-9a-f-]+\\.pdf",
+ "keepDays": 21,
+ "courses": {"pattern": "^(\\d)К", "yearBase": 2020}
+}

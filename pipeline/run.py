@@ -1,0 +1,203 @@
+"""
+Обновляет расписания всех источников из sources/*.json и пишет готовые файлы для приложения в feeds/<id>/.
+
+Запуск: python pipeline/run.py [--offline]   (--offline — без скачивания, только пересобрать из того, что уже есть)
+GitHub Actions запускает его каждые 30 минут (см. .github/workflows/update.yml).
+
+Что лежит в репозитории:
+  sources/<id>.json          — откуда и как брать расписание (страница, шаблон ссылок, адаптер)
+  state/<id>/pdf/<дата>.pdf   — скачанные файлы (чтобы не качать заново и было на чём проверить разбор)
+  state/<id>/sources.json     — дата → ссылка и контрольная сумма файла
+  feeds/<id>/index.json       — что есть: курсы, группы, дни, когда обновлено
+  feeds/<id>/<курс>.json      — расписание курса в формате приложения (soloweek-schedule)
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import re
+import sys
+import time as _time
+import urllib.request
+from datetime import date, datetime, timedelta, timezone
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+from adapters.pdf_daily_grid import DaySchedule, Vocabulary, feed_pdf, parse_pdf  # noqa: E402
+
+UA = "SoloWeek-schedule-bot (+https://github.com/soloveiby/SoloWeek-data)"
+MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
+
+
+def fetch(url: str) -> bytes:
+    req = urllib.request.Request(url, headers={"User-Agent": UA})
+    with urllib.request.urlopen(req, timeout=40) as r:
+        return r.read()
+
+
+def dump(path: Path, data, compact: bool = False) -> bool:
+    """Пишет JSON, только если содержимое поменялось (иначе каждая проверка давала бы коммит)."""
+    text = (json.dumps(data, ensure_ascii=False, separators=(",", ":")) if compact else json.dumps(data, ensure_ascii=False, indent=1)) + "\n"
+    if path.exists() and path.read_text(encoding="utf-8") == text:
+        return False
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return True
+
+
+def course_of(group: str, cfg: dict, today: date) -> int | None:
+    """«6К9091» → 1 курс: первая цифра — год поступления (2026), учебный год начинается 1 сентября."""
+    rule = cfg.get("courses")
+    if not rule:
+        return None
+    m = re.match(rule["pattern"], group)
+    if not m:
+        return None
+    year = rule["yearBase"] + int(m[1])
+    start = today.year if today.month >= 9 else today.year - 1
+    n = start - year + 1
+    return n if 1 <= n <= 6 else None
+
+
+def week_title(days: list[date]) -> str:
+    a, b = days[0], days[-1]
+    if a.month == b.month:
+        return f"{a.day}–{b.day} {MONTHS[b.month - 1]}"
+    return f"{a.day} {MONTHS[a.month - 1]} – {b.day} {MONTHS[b.month - 1]}"
+
+
+def lesson_json(l, shared: list[int]) -> dict:
+    return {
+        "start": l.start.strftime("%H:%M"), "end": l.end.strftime("%H:%M"),
+        "title": l.title, "type": "OTHER",
+        "teachers": l.teachers, "rooms": l.rooms, "tags": l.tags, "details": l.details,
+        "cancelled": False, "sharedWith": shared,
+    }
+
+
+def build_feed(days: list[DaySchedule], groups: list[str]) -> dict:
+    """Дни → формат приложения: недели с понедельника, группы по колонкам, как у таблиц вузов."""
+    index = {g: i for i, g in enumerate(groups)}
+    group_list = [{"index": i, "name": g, "code": "", "specialty": "", "profiles": []} for i, g in enumerate(groups)]
+    by_week: dict[date, list[DaySchedule]] = {}
+    for d in sorted(days, key=lambda d: d.date):
+        by_week.setdefault(d.date - timedelta(days=d.date.weekday()), []).append(d)
+    weeks = []
+    for monday, ds in sorted(by_week.items()):
+        out_days = []
+        for d in ds:
+            per: dict[str, list] = {}
+            for l in d.lessons:
+                if l.group in index:
+                    per.setdefault(str(index[l.group]), []).append(lesson_json(l, [index[l.group]]))
+            for v in per.values():
+                v.sort(key=lambda x: (x["start"], x["tags"]))
+            out_days.append({"date": d.date.isoformat(), "parity": d.parity, "lessons": per})
+        weeks.append({"title": week_title([d.date for d in ds]), "groups": group_list, "days": out_days})
+    return {"format": "soloweek-schedule", "version": 1, "weeks": weeks}
+
+
+def run_source(cfg: dict, offline: bool) -> list[str]:
+    sid = cfg["id"]
+    state = ROOT / "state" / sid
+    pdf_dir = state / "pdf"
+    pdf_dir.mkdir(parents=True, exist_ok=True)
+    known_path = state / "sources.json"
+    known = json.loads(known_path.read_text(encoding="utf-8")) if known_path.exists() else {}
+    log = []
+    today = datetime.now(timezone.utc).date()
+
+    # 1. какие файлы сейчас на странице
+    if not offline:
+        html = fetch(cfg["page"]).decode("utf-8", "replace")
+        links = {}
+        for m in re.finditer(cfg["link"], html):
+            dd, mm, yyyy = m["date"].split(".")
+            links[f"{yyyy}-{mm}-{dd}"] = cfg["base"] + m[0]
+        if not links:
+            raise RuntimeError(f"{sid}: на странице не нашлось ни одной ссылки — сайт поменялся?")
+        # 2. новые и заменённые файлы (старше окна хранения не качаем вовсе)
+        horizon = today - timedelta(days=cfg.get("keepDays", 21))
+        for day, url in sorted(links.items()):
+            if date.fromisoformat(day) < horizon:
+                continue
+            if known.get(day, {}).get("url") == url and (pdf_dir / f"{day}.pdf").exists():
+                continue
+            data = fetch(url)
+            sha = hashlib.sha256(data).hexdigest()
+            if known.get(day, {}).get("sha") != sha:
+                (pdf_dir / f"{day}.pdf").write_bytes(data)
+                log.append(f"{sid}: {'обновлён' if day in known else 'новый'} день {day}")
+            known[day] = {"url": url, "sha": sha}
+            _time.sleep(1)
+        dump(known_path, known)
+
+    # 3. старое не храним: окно в keepDays дней назад
+    horizon = today - timedelta(days=cfg.get("keepDays", 21))
+    for f in pdf_dir.glob("*.pdf"):
+        if date.fromisoformat(f.stem) < horizon:
+            f.unlink()
+            known.pop(f.stem, None)
+    dump(known_path, known)
+
+    # 4. разбор: сначала копим словарь по всем файлам, потом разбираем каждый
+    files = sorted(pdf_dir.glob("*.pdf"))
+    vocab = Vocabulary()
+    for f in files:
+        feed_pdf(str(f), vocab)
+    days: list[DaySchedule] = []
+    warnings: list[str] = []
+    for f in files:
+        try:
+            d = parse_pdf(str(f), vocab)
+            days.append(d)
+            warnings += d.warnings
+        except Exception as e:  # один битый файл не должен ломать остальные дни
+            warnings.append(f"{f.name}: не разобрался: {e}")
+
+    # 5. раскладываем по курсам и пишем файлы для приложения
+    out = ROOT / "feeds" / sid
+    by_course: dict[int, set[str]] = {}
+    for d in days:
+        for g in d.groups:
+            c = course_of(g, cfg, today)
+            if c is not None:
+                by_course.setdefault(c, set()).add(g)
+    courses = []
+    changed = False
+    for c, groups in sorted(by_course.items()):
+        gl = sorted(groups)
+        feed = build_feed(days, gl)
+        if dump(out / f"{c}.json", feed, compact=True):
+            changed = True
+            log.append(f"{sid}: обновлён {c} курс")
+        courses.append({"name": f"{c} курс", "id": f"{c}", "groups": gl})
+    index = {
+        "format": "soloweek-feed", "version": 1, "id": sid,
+        "days": [d.date.isoformat() for d in sorted(days, key=lambda d: d.date)],
+        "courses": courses, "warnings": warnings,
+    }
+    old = json.loads((out / "index.json").read_text(encoding="utf-8")) if (out / "index.json").exists() else {}
+    index["updatedAt"] = old.get("updatedAt") if not changed and old.get("days") == index["days"] else datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    dump(out / "index.json", index)
+    return log + [f"⚠ {w}" for w in warnings]
+
+
+def main():
+    offline = "--offline" in sys.argv
+    failed = False
+    for path in sorted((ROOT / "sources").glob("*.json")):
+        cfg = json.loads(path.read_text(encoding="utf-8"))
+        try:
+            for line in run_source(cfg, offline):
+                print(line)
+        except Exception as e:
+            failed = True
+            print(f"✖ {cfg.get('id')}: {e}")
+    sys.exit(1 if failed else 0)
+
+
+if __name__ == "__main__":
+    main()
