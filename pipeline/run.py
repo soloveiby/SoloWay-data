@@ -18,6 +18,7 @@ import json
 import re
 import sys
 import time as _time
+import urllib.error
 import urllib.request
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -31,10 +32,41 @@ UA = "SoloWay-schedule-bot (+https://github.com/soloveiby/SoloWay-data)"
 MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
 
 
-def fetch(url: str) -> bytes:
+def fetch(url: str, tries: int = 4) -> bytes:
+    """Сайты вузов бывают медленными: несколько попыток с растущей паузой."""
     req = urllib.request.Request(url, headers={"User-Agent": UA})
-    with urllib.request.urlopen(req, timeout=40) as r:
-        return r.read()
+    for attempt in range(tries):
+        try:
+            with urllib.request.urlopen(req, timeout=90) as r:
+                return r.read()
+        except Exception:
+            if attempt == tries - 1: raise
+            _time.sleep(10 * (attempt + 1))
+    raise RuntimeError("unreachable")
+
+
+class Unreachable(Exception):
+    """Сайт не ответил — это не поломка разбора: оставляем прошлые данные и пробуем в следующий раз."""
+
+
+GRACE_HOURS = 36   # столько терпим недоступность сайта, прежде чем прогон покраснеет и придёт письмо
+
+
+def network(sid: str, meta_path: Path, fn):
+    """Сетевую часть источника выполняем «мягко»: ошибка сети → предупреждение, пока сайт молчит меньше GRACE_HOURS."""
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+    try:
+        result = fn()
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else meta
+        meta["lastOk"] = datetime.now(timezone.utc).isoformat()
+        dump(meta_path, meta)
+        return result
+    except (OSError, urllib.error.URLError, TimeoutError) as e:
+        ok = meta.get("lastOk")
+        hours = (datetime.now(timezone.utc) - datetime.fromisoformat(ok)).total_seconds() / 3600 if ok else 0
+        if ok and hours > GRACE_HOURS:
+            raise RuntimeError(f"{sid}: сайт недоступен уже {hours:.0f} ч ({e})")
+        raise Unreachable(f"{sid}: сайт не ответил ({e}) — оставляем прошлые данные")
 
 
 def dump(path: Path, data, compact: bool = False) -> bool:
@@ -111,7 +143,12 @@ def run_pdf_daily(cfg: dict, offline: bool) -> list[str]:
 
     # 1. какие файлы сейчас на странице
     if not offline:
-        html = fetch(cfg["page"]).decode("utf-8", "replace")
+        try:
+            html = network(sid, state / "net.json", lambda: fetch(cfg["page"])).decode("utf-8", "replace")
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+            offline = True
+    if not offline:
         links = {}
         for m in re.finditer(cfg["link"], html):
             dd, mm, yyyy = m["date"].split(".")
@@ -203,7 +240,8 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
     if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 11) * 3600:
         return []
     groups_meta: dict[str, dict] = meta.get("groups", {})
-    if not offline:
+    def crawl():
+        nonlocal groups_meta
         c = B.Client(delay=cfg.get("delay", 0.4))
         seen: dict[str, dict] = {}
         failures = 0
@@ -228,8 +266,10 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
                                      k=l.type, p=l.teachers, r=l.rooms, g=l.tags) for l in lessons]
                         if dump(gdir / f"{gid}.json", data): log.append(f"{sid}: обновлена {name}")
                         seen[gid] = {"name": name, "spec": spec, "fac": fac_id, "course": int(co["value"])}
+        if failures and not any(groups_meta.get(g) is not v for g, v in seen.items()):
+            raise OSError(f"ни одна группа не скачалась ({failures})")      # сайт лёг — это сеть, не разбор
         if failures > len(seen) // 2:
-            raise RuntimeError(f"{sid}: слишком много ошибок ({failures}) — сайт недоступен или поменялся")
+            raise RuntimeError(f"{sid}: слишком много ошибок ({failures}) — сайт поменялся?")
         # группы, которых больше нет на сайте, убираем
         for gid in set(groups_meta) - set(seen):
             (gdir / f"{gid}.json").unlink(missing_ok=True)
@@ -237,6 +277,14 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
         meta["groups"] = groups_meta
         meta["lastRun"] = now.isoformat()
         dump(meta_path, meta)
+
+    if not offline:
+        try:
+            network(sid, meta_path, crawl)
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else meta
+        groups_meta = meta.get("groups", groups_meta)
 
     cur, cur_at = meta.get("currentWeek"), meta.get("currentWeekAt")
     if not cur:
@@ -296,7 +344,7 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
     last = meta.get("lastRun")
     if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 6) * 3600:
         return []
-    if not offline:
+    def download():
         # магистратура: файлы и названия программ берём из ссылок на странице факультета
         if cfg.get("mastersLink"):
             page = fetch(cfg["page"]).decode("utf-8", "replace")
@@ -326,6 +374,12 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
             _time.sleep(1)
         meta["lastRun"] = now.isoformat()
         dump(meta_path, meta)
+    if not offline:
+        try:
+            network(sid, meta_path, download)
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else meta
     masters = meta.get("masters", {})
     files = [pdf_dir / f"{n}.pdf" for n in cfg["files"] if (pdf_dir / f"{n}.pdf").exists()]
     mfiles = [(pdf_dir / f"{n}.pdf", label) for n, label in masters.items() if (pdf_dir / f"{n}.pdf").exists()]
