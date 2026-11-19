@@ -553,7 +553,135 @@ def run_html_groups(cfg: dict, offline: bool) -> list[str]:
     return log
 
 
-ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid, "html_group_table": run_html_groups}
+# ───────────────────────── МГЭУ им. Сахарова: ASP.NET-страница, группа × неделя ─────────────────────────
+
+def run_iseu(cfg: dict, offline: bool) -> list[str]:
+    from adapters import iseu_aspx as I
+    sid = cfg["id"]
+    state = ROOT / "state" / sid
+    gdir = state / "groups"
+    gdir.mkdir(parents=True, exist_ok=True)
+    meta_path = state / "meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+    log: list[str] = []
+    now = datetime.now(timezone.utc)
+    today = (now + timedelta(hours=3)).date()              # Минск
+    monday = today - timedelta(days=today.weekday())
+    # семестр: с 1 сентября или с 1 февраля; прошлые недели берём один раз, дальше — только ближайшие
+    term = date(today.year, 9, 1) if today.month >= 8 else date(today.year, 2, 1) if today.month >= 2 else date(today.year - 1, 9, 1)
+    term_monday = term - timedelta(days=term.weekday())
+    last = meta.get("lastRun")
+    if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 3) * 3600:
+        return []
+    groups_meta: dict[str, dict] = meta.get("groups", {})
+
+    def weeks_for(gid: str) -> list[date]:
+        have = groups_meta.get(gid, {}).get("term") == term.isoformat()
+        first = monday - timedelta(weeks=cfg.get("weeksBack", 1)) if have else term_monday
+        return [first + timedelta(weeks=i) for i in range(((monday - first).days // 7) + cfg.get("weeksAhead", 3) + 1)]
+
+    def crawl():
+        nonlocal groups_meta
+        c = I.Client(delay=cfg.get("delay", 0.3))
+        c.start()
+        seen: dict[str, dict] = {}
+        failures = ok = 0
+        for fac_id, fac in cfg["faculties"].items():
+            c.postback("ddlFac", ddlFac=fac_id)
+            dep = next((v for v, t, _ in I.options(c.page, "ddlDep") if t.lower().startswith(cfg.get("form", "дневная"))), None)
+            if dep is None:
+                continue
+            c.postback("ddlDep", ddlFac=fac_id, ddlDep=dep)
+            for co, co_name, _ in I.options(c.page, "ddlCourse"):
+                c.postback("ddlCourse", ddlFac=fac_id, ddlDep=dep, ddlCourse=co)
+                course = int(re.match(r"\d+", co_name)[0]) if re.match(r"\d+", co_name) else int(co)
+                for gid, name, _ in I.options(c.page, "ddlGroup"):
+                    path = gdir / f"{gid}.json"
+                    stored = json.loads(path.read_text(encoding="utf-8")) if path.exists() else []
+                    fetched: dict[str, list] = {}
+                    try:
+                        for wk in weeks_for(gid):
+                            ls = I.merge_parallel(I.parse_timetable(c.timetable(gid, I.week_value(wk))))
+                            fetched[wk.isoformat()] = [dict(date=l.date.isoformat(), s=l.start.strftime("%H:%M"), e=l.end.strftime("%H:%M"),
+                                                            t=l.title, k=l.type, p=l.teachers, r=l.rooms, g=l.tags) for l in ls]
+                        ok += 1
+                    except Exception as e:
+                        failures += 1
+                        log.append(f"⚠ {sid}: {name}: не скачалась ({e}) — оставляем прошлое")
+                        if gid in groups_meta: seen[gid] = groups_meta[gid]
+                        continue
+                    # обновлённые недели заменяем целиком, остальные (прошлые) оставляем как были
+                    def week_of(d: str) -> str:
+                        x = date.fromisoformat(d); return (x - timedelta(days=x.weekday())).isoformat()
+                    keep = [l for l in stored if week_of(l["date"]) not in fetched and date.fromisoformat(l["date"]) >= term_monday]
+                    data = sorted(keep + [l for ls in fetched.values() for l in ls], key=lambda l: (l["date"], l["s"], l["g"]))
+                    if dump(path, data): log.append(f"{sid}: обновлена {name}")
+                    seen[gid] = {"name": name, "fac": fac_id, "course": course, "term": term.isoformat()}
+        if failures and not ok:
+            raise OSError(f"ни одна группа не скачалась ({failures})")      # сайт лёг — это сеть, не разбор
+        if failures > ok:
+            raise RuntimeError(f"{sid}: слишком много ошибок ({failures}) — сайт поменялся?")
+        if not seen:
+            raise RuntimeError(f"{sid}: не нашлось ни одной группы — сайт поменялся?")
+        for gid in set(groups_meta) - set(seen):
+            (gdir / f"{gid}.json").unlink(missing_ok=True)
+        groups_meta = seen
+        meta["groups"] = groups_meta
+        meta["lastRun"] = now.isoformat()
+        dump(meta_path, meta)
+
+    if not offline:
+        try:
+            network(sid, meta_path, crawl)
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+        meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else meta
+        groups_meta = meta.get("groups", groups_meta)
+
+    by_fc: dict[tuple[str, int], list[str]] = {}
+    for gid, g in groups_meta.items():
+        by_fc.setdefault((g["fac"], g["course"]), []).append(gid)
+    index = {"format": "soloweek-feed", "version": 1, "id": sid, "faculties": []}
+    for fac_id, fac in cfg["faculties"].items():
+        courses = []
+        for (f, course), gids in sorted(by_fc.items()):
+            if f != fac_id: continue
+            gids.sort(key=lambda g: groups_meta[g]["name"])
+            groups = [{"index": i, "name": groups_meta[g]["name"], "code": "", "specialty": "", "profiles": []} for i, g in enumerate(gids)]
+            per_group = [json.loads((gdir / f"{g}.json").read_text(encoding="utf-8")) if (gdir / f"{g}.json").exists() else [] for g in gids]
+            dates = sorted({date.fromisoformat(l["date"]) for ls in per_group for l in ls})
+            if not dates:
+                continue
+            first = dates[0] - timedelta(days=dates[0].weekday())
+            last_day = max(dates[-1], monday + timedelta(days=5))
+            weeks = []
+            wk = first
+            while wk <= last_day:
+                days = []
+                for d in range(6):
+                    day = (wk + timedelta(days=d)).isoformat()
+                    per: dict[str, list] = {}
+                    for gi, ls in enumerate(per_group):
+                        for l in ls:
+                            if l["date"] == day:
+                                per.setdefault(str(gi), []).append({
+                                    "start": l["s"], "end": l["e"], "title": l["t"], "type": l["k"],
+                                    "teachers": l["p"], "rooms": l["r"], "tags": l["g"], "details": [],
+                                    "cancelled": False, "sharedWith": [gi]})
+                    days.append({"date": day, "lessons": per})
+                weeks.append({"title": week_title([wk, wk + timedelta(days=5)]), "groups": groups, "days": days})
+                wk += timedelta(weeks=1)
+            if dump(ROOT / "feeds" / f"{sid}-{fac['slug']}" / f"{course}.json", {"format": "soloweek-schedule", "version": 1, "weeks": weeks}, compact=True):
+                log.append(f"{sid}: {fac['name']}, {course} курс — файл обновлён")
+            courses.append({"name": f"{course} курс", "id": f"{sid}-{fac['slug']}/{course}", "groups": len(gids)})
+        index["faculties"].append({"id": fac_id, "slug": fac["slug"], "name": fac["name"], "courses": courses})
+    old = json.loads((ROOT / "feeds" / sid / "index.json").read_text(encoding="utf-8")) if (ROOT / "feeds" / sid / "index.json").exists() else {}
+    index["updatedAt"] = old.get("updatedAt") if not log and old.get("faculties") == index["faculties"] else now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    dump(ROOT / "feeds" / sid / "index.json", index)
+    return log
+
+
+ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid, "html_group_table": run_html_groups, "iseu_aspx": run_iseu}
 
 
 def main():

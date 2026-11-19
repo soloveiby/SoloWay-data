@@ -1,0 +1,14 @@
+{
+ "id": "iseu",
+ "name": "МГЭУ им. А. Д. Сахарова БГУ",
+ "adapter": "iseu_aspx",
+ "everyHours": 3,
+ "delay": 0.3,
+ "form": "дневная",
+ "weeksBack": 1,
+ "weeksAhead": 3,
+ "faculties": {
+  "2": {"slug": "fmos", "name": "Факультет мониторинга окружающей среды"},
+  "4": {"slug": "fem",  "name": "Факультет экологической медицины"}
+ }
+}

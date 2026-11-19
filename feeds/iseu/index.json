@@ -1,0 +1,67 @@
+{
+ "format": "soloweek-feed",
+ "version": 1,
+ "id": "iseu",
+ "faculties": [
+  {
+   "id": "2",
+   "slug": "fmos",
+   "name": "Факультет мониторинга окружающей среды",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "iseu-fmos/1",
+     "groups": 7
+    },
+    {
+     "name": "2 курс",
+     "id": "iseu-fmos/2",
+     "groups": 6
+    },
+    {
+     "name": "3 курс",
+     "id": "iseu-fmos/3",
+     "groups": 8
+    },
+    {
+     "name": "4 курс",
+     "id": "iseu-fmos/4",
+     "groups": 7
+    },
+    {
+     "name": "5 курс",
+     "id": "iseu-fmos/5",
+     "groups": 1
+    }
+   ]
+  },
+  {
+   "id": "4",
+   "slug": "fem",
+   "name": "Факультет экологической медицины",
+   "courses": [
+    {
+     "name": "1 курс",
+     "id": "iseu-fem/1",
+     "groups": 7
+    },
+    {
+     "name": "2 курс",
+     "id": "iseu-fem/2",
+     "groups": 8
+    },
+    {
+     "name": "3 курс",
+     "id": "iseu-fem/3",
+     "groups": 9
+    },
+    {
+     "name": "4 курс",
+     "id": "iseu-fem/4",
+     "groups": 11
+    }
+   ]
+  }
+ ],
+ "updatedAt": "2026-11-19T06:20:40Z"
+}
