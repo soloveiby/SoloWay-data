@@ -320,6 +320,22 @@ def merge_fragments(entries: list) -> list:
     return out
 
 
+# тип пары: в PDF ФМО его почти не пишут — берём только явные пометки, и иностранный язык (всегда практика)
+KIND_MARK = re.compile(r"\s*(?:\((л|лк|лек|с|сем|пр|лаб)\.?\)|[–—-]\s*(семинары?|лекции?|практика))\s*$", re.I)
+
+
+def kind_of(title: str) -> tuple[str, str]:
+    """«Психология конфликта (л)» → («Психология конфликта», "LECTURE")."""
+    m = KIND_MARK.search(title)
+    if m:
+        w = (m.group(1) or m.group(2)).lower()
+        kind = "LECTURE" if w.startswith("л") and not w.startswith("лаб") else "SEMINAR" if w.startswith("с") else "LAB" if w.startswith("лаб") else "PRACTICE"
+        return title[:m.start()].strip(" –—-"), kind
+    if re.match(r"(?:иностранный|восточный иностранный|второй иностранный|русский|белорусский) язык", title, re.I):
+        return title, "PRACTICE"
+    return title, "OTHER"
+
+
 def parse_pdf(path: str, vocab: Vocabulary, single: str | None = None) -> list[Course]:
     """[single] — имя «группы» для PDF с одной колонкой (магистратура: одна программа на файл)."""
     courses: list[Course] = []

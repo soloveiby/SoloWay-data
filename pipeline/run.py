@@ -422,9 +422,10 @@ def run_week_grid(cfg: dict, offline: bool) -> list[str]:
                             if l.only is None and d(l.since) and day < d(l.since): continue
                             if d(l.until) and day > d(l.until): continue
                             if day in {d(x) for x in l.skip}: continue
+                            title, kind = W.kind_of(l.title)
                             per.setdefault(str(gi), []).append({
-                                "start": l.start.strftime("%H:%M"), "end": l.end.strftime("%H:%M"), "title": l.title,
-                                "type": "OTHER", "teachers": l.teachers, "rooms": l.rooms, "tags": l.tags,
+                                "start": l.start.strftime("%H:%M"), "end": l.end.strftime("%H:%M"), "title": title,
+                                "type": kind, "teachers": l.teachers, "rooms": l.rooms, "tags": l.tags,
                                 "details": [l.note] if l.note else [], "cancelled": False, "sharedWith": [gi]})
                     for v in per.values(): v.sort(key=lambda x: (x["start"], x["tags"]))
                 days.append({"date": day.isoformat(), "lessons": per})
