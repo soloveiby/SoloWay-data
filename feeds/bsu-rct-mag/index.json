@@ -1,0 +1,18 @@
+{
+ "format": "soloweek-feed",
+ "version": 1,
+ "id": "bsu-rct-mag",
+ "courses": [
+  {
+   "name": "Магистратура 1 курс",
+   "id": "bsu-rct-mag/1",
+   "groups": 5
+  },
+  {
+   "name": "Магистратура 2 курс",
+   "id": "bsu-rct-mag/2",
+   "groups": 4
+  }
+ ],
+ "updatedAt": "2026-11-19T07:20:14Z"
+}

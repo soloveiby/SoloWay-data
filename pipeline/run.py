@@ -681,7 +681,93 @@ def run_iseu(cfg: dict, offline: bool) -> list[str]:
     return log
 
 
-ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid, "html_group_table": run_html_groups, "iseu_aspx": run_iseu}
+# ───────────────────────── Google-таблица на семестр с датами в ячейках (магистратура радиофака) ─────────────────────────
+
+def run_gsheet_term(cfg: dict, offline: bool) -> list[str]:
+    from adapters import gsheet_term as G
+    sid = cfg["id"]
+    state = ROOT / "state" / sid
+    state.mkdir(parents=True, exist_ok=True)
+    meta_path = state / "meta.json"
+    meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+    log: list[str] = []
+    now = datetime.now(timezone.utc)
+    today = (now + timedelta(hours=3)).date()
+    term_start = date(today.year, 9, 1) if today.month >= 8 else date(today.year - 1, 9, 1) if today.month == 1 else date(today.year, 2, 1)
+    last = meta.get("lastRun")
+    if not offline and last and (now - datetime.fromisoformat(last)).total_seconds() < cfg.get("everyHours", 2) * 3600:
+        return []
+    ids = sorted({sh["id"] for c in cfg["courses"] for sh in c["sheets"]})
+
+    def download():
+        for sheet_id in ids:
+            data = fetch(f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=xlsx")
+            sha = hashlib.sha256(data).hexdigest()
+            if meta.get("sha", {}).get(sheet_id) != sha:
+                (state / f"{sheet_id}.xlsx").write_bytes(data)
+                meta.setdefault("sha", {})[sheet_id] = sha
+                log.append(f"{sid}: таблица {sheet_id[:8]}… обновилась")
+        meta["lastRun"] = now.isoformat()
+        dump(meta_path, meta)
+
+    if not offline:
+        try:
+            network(sid, meta_path, download)
+        except Unreachable as e:
+            log.append(f"⚠ {e}")
+    out = ROOT / "feeds" / sid
+    courses = []
+    for c in cfg["courses"]:
+        groups: list[tuple[str, str]] = []
+        per_group: list[list] = []
+        for sh in c["sheets"]:
+            path = state / f"{sh['id']}.xlsx"
+            if not path.exists():
+                continue
+            book = G.read_xlsx(path.read_bytes())
+            rows = book.get(sh["sheet"]) if isinstance(sh["sheet"], str) else list(book.values())[sh["sheet"]]
+            if rows is None:
+                raise RuntimeError(f"{sid}: в таблице нет листа «{sh['sheet']}» — переименовали?")
+            gs, ls = G.parse_sheet(rows, term_start)
+            if not gs:
+                raise RuntimeError(f"{sid}: на листе «{sh['sheet']}» не нашлось групп — таблица поменялась?")
+            for gi, g in enumerate(gs):
+                groups.append(g)
+                per_group.append(ls.get(gi, []))
+        dates = sorted({l.date for ls in per_group for l in ls})
+        if not dates:
+            continue
+        glist = [{"index": i, "name": n, "code": "", "specialty": sp, "profiles": []} for i, (n, sp) in enumerate(groups)]
+        monday = dates[0] - timedelta(days=dates[0].weekday())
+        weeks = []
+        while monday <= dates[-1]:
+            days = []
+            for d in range(6):
+                day = monday + timedelta(days=d)
+                per: dict[str, list] = {}
+                for gi, ls in enumerate(per_group):
+                    for l in ls:
+                        if l.date == day:
+                            per.setdefault(str(gi), []).append({
+                                "start": l.start.strftime("%H:%M"), "end": l.end.strftime("%H:%M"), "title": l.title, "type": l.type,
+                                "teachers": l.teachers, "rooms": l.rooms, "tags": l.tags, "details": [], "cancelled": False, "sharedWith": [gi]})
+                for v in per.values(): v.sort(key=lambda x: (x["start"], x["title"]))
+                days.append({"date": day.isoformat(), "lessons": per})
+            weeks.append({"title": week_title([monday, monday + timedelta(days=5)]), "groups": glist, "days": days})
+            monday += timedelta(weeks=1)
+        if dump(out / f"{c['course']}.json", {"format": "soloweek-schedule", "version": 1, "weeks": weeks}, compact=True):
+            log.append(f"{sid}: {c['name']} — файл обновлён")
+        courses.append({"name": c["name"], "id": f"{sid}/{c['course']}", "groups": len(groups)})
+    if not courses:
+        raise RuntimeError(f"{sid}: ни одной группы не разобралось")
+    old = json.loads((out / "index.json").read_text(encoding="utf-8")) if (out / "index.json").exists() else {}
+    index = {"format": "soloweek-feed", "version": 1, "id": sid, "courses": courses}
+    index["updatedAt"] = old.get("updatedAt") if not log and old.get("courses") == courses else now.strftime("%Y-%m-%dT%H:%M:%SZ")
+    dump(out / "index.json", index)
+    return log
+
+
+ADAPTERS = {"pdf_daily_grid": run_pdf_daily, "bseu_api": run_bseu, "pdf_week_grid": run_week_grid, "html_group_table": run_html_groups, "iseu_aspx": run_iseu, "gsheet_term": run_gsheet_term}
 
 
 def main():

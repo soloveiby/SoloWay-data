@@ -1,0 +1,16 @@
+{
+ "id": "bsu-rct-mag",
+ "name": "Радиофак БГУ — магистратура",
+ "adapter": "gsheet_term",
+ "everyHours": 2,
+ "courses": [
+  {"course": 1, "name": "Магистратура 1 курс", "sheets": [
+   {"id": "1UAtxcTabs6rrLCfoXLmzRrSMYNHqpeB00YBZNHhmspo", "sheet": "1 курс расписание"},
+   {"id": "1fFfMKL_derWbXCCISlmCO9MpO6QSjC_eDb_2RKKnDMA", "sheet": 0}
+  ]},
+  {"course": 2, "name": "Магистратура 2 курс", "sheets": [
+   {"id": "1UAtxcTabs6rrLCfoXLmzRrSMYNHqpeB00YBZNHhmspo", "sheet": "2 курс расписание"},
+   {"id": "1g9dPqJ6zwA4TRr9xz0_uCOHO7qRftO4CA1r0VJJ1rlo", "sheet": 0}
+  ]}
+ ]
+}
