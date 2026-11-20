@@ -10,21 +10,21 @@
   "ITG": "ed463280c86e150db2d68b0ae5f5b5335a7dc50959f3720ca6563b098571e51b",
   "V": "a088a82a05a58c247a9b95c5f4950461f236ddb61654817a5cde5d0fd6817400",
   "AF": "a612126bdc5960ace98f93116ccccc98f7ba25e5bb6235e1ae5c9bec83e9ab7b",
-  "magistr_timetable_IR_1": "1e9a48d9df04c2aba1a52fe0f1d410530b0548ff63f23664006414af9a72df50",
-  "magistr_timetable_IR_2": "650b46a1f22af4eaf6b2681d1d4ee04d2dc0828026ddfd3491ca227861f26ee5",
-  "magistr_timetable_Jurisprudence": "9617528a744d2b00f3a386dd65393ff5dcb924c7e70edb93fcf4d0d7f5edb550",
-  "magistr_timetable_2_WE": "88370760ee111462f6d49d43a8f24de6b465db0b461b320c1c346283a9af364e",
-  "timatable_1_WE": "697a36c221d3bddea8fc6b9525cb6385ae7d0c676891fddb217623ec950451ca",
-  "magistr_timetable_2_WE-2": "bc47cbaf4002507816335b838e03246694dd4ad9ae9c879d800bb4f8a0803153",
-  "magistr_timetable_mened": "d2b9887135c84db34d15142c230752ac35f4cc72a200b2964b9320504389b563",
-  "magistr_timetable_MSES": "94a28dbd209473b090cb1b28029630aff6862d8ffb3c90f4ed69216024c4ec29",
-  "magistr_timetable_Vostok": "9b90b626c732e331d127d225503a5ef6f9853ddd1d5773c375bbc2a5d7832bcd",
-  "timetable_magistr_IR_en_2nd_": "0f352d8ab0de541902cc95b490242472c03cb7643aef73233cb407b013f31d98",
-  "magistr_timetable_WE": "8e82976cdb087ea6ecb117137712ce69922a98e8e4e311334e24aa809cba7966",
-  "timatable_1_WE-1": "1d12b7a717b9d176c057fc2c116010ea83c51fcec360d2dfbc7508cd0ada8423",
-  "timatable_1_WE-2": "30f55f5ffb639543b3b03c1331c3b69d72f93e116d0d0c84492944f1ae316a6e",
-  "magistr_Management27": "cc83ccd79af8f0f305016996a2f13883e4d2c6b43b4c5495ba35615e9bc9946e",
-  "magistr_Jurisprudence_Business1": "d1745ab01594db1e9810402e5d48d5f143180d32d3350c57db891c114ebe95c4"
+  "magistr_timetable_IR_1": "05dfd64f50d4471bd4176b5478672f7076851204c527c6c8ec6731da9e38ae3e",
+  "magistr_timetable_IR_2": "c77b48a40f0d18622b6db71aa1756a0b93627b34f436f9a83d975ea69fa5c745",
+  "magistr_timetable_Jurisprudence": "c094a704bdb4aa306412336192024e641fe8c5dc7765b0fa62beb2ada3879943",
+  "magistr_timetable_2_WE": "7f784dedf2e820eb635ee5c35b528613e5c60fb84b62986a97d5cf083b8033c1",
+  "timatable_1_WE": "1d205db43405acdfaa4f892582a1f64a501a78c0db46d5bdbf6c2889c6911414",
+  "magistr_timetable_2_WE-2": "a984331b93f6541563a0874f8416e507f23e4e13543a2d8c1f4a1484755e63f7",
+  "magistr_timetable_mened": "4d603b5bc93a0650f3f13123b54d5f85ef488109adf929524556238e46fdfca6",
+  "magistr_timetable_MSES": "b412e0309dc2fc83fca00b42e974aca1189ab61d55ac619a97736c3bf6dcd3bb",
+  "magistr_timetable_Vostok": "988a6eb056da6ccb793b08aa94011e260e51a1b587261d9dfdfc189cf94463c6",
+  "timetable_magistr_IR_en_2nd_": "d035c51b71eeb9653152a211ca0d94f430cc3bcafdf679dc73c3bfe1341852ec",
+  "magistr_timetable_WE": "b35b9ca85adb88b50034c7f25378faaf9826a268ae47afcc57b4405da9733bb4",
+  "timatable_1_WE-1": "9770bb5bac692edaf68ccaee04d74603cbe53576233a499c3ab656d70bd29f71",
+  "timatable_1_WE-2": "fd05143d022bd19c6e6c35d583ebcab4a3eaac753db89b55740ee578a2f486e8",
+  "magistr_Management27": "64202f0a2ad7600ca81d7c000a23b1896477c423efd5dc4bd2188a3e5aaf3c24",
+  "magistr_Jurisprudence_Business1": "3ec5e71013bc568a212b8398c2f40add99b5318fa6d16c9992dcb9b0eded2637"
  },
  "masters": {
   "magistr_timetable_IR_1": "Глобальные тренды современного Китая",
@@ -43,6 +43,6 @@
   "magistr_Management27": "International tourism and hospitality (EN)",
   "magistr_Jurisprudence_Business1": "International Business Law (EN)"
  },
- "lastRun": "2026-11-20T03:52:21.771321+00:00",
- "lastOk": "2026-11-20T03:53:32.646336+00:00"
+ "lastRun": "2026-11-20T12:31:14.501281+00:00",
+ "lastOk": "2026-11-20T12:32:18.695897+00:00"
 }
