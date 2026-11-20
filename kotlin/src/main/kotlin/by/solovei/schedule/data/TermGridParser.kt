@@ -55,7 +55,9 @@ object TermGridParser {
 
     private const val MAX_COL = 320
     private val WEEK = Regex("""^([IVXL]+|\d{1,2})\s*недел[яи]$""", RegexOption.IGNORE_CASE)
-    private val GROUP = Regex("""^гр\.?\s*(\S.*)$""", RegexOption.IGNORE_CASE)
+    // «гр.1д2601ГУП» (ГУП) или просто «1д2601УИР» (ГУЭ, УИР — у них шапка без «гр.»)
+    private val GROUP = Regex("""^(?:гр\.?\s*(\S.*)|(\d{1,2}[а-яё]{1,2}\d{3,5}[а-яёa-z]{2,6}[\w-]*))$""", RegexOption.IGNORE_CASE)
+    private fun groupOf(text: String): String? = GROUP.find(text.squash())?.let { m -> m.groupValues[1].ifEmpty { m.groupValues[2] }.squash() }
     private val CODE = Regex("""\d-\d{2}-\d{4}-\d{2}""")
     private val DAY_NAMES = listOf("понедельник", "вторник", "среда", "четверг", "пятница", "суббота")
     private val TIME = Regex("""(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})""")
@@ -81,21 +83,29 @@ object TermGridParser {
                 lectureRoom = rooms(own.ifEmpty { (c + 1..c + 6).map { sheet.text(r, it).squash() }.firstOrNull { it.isNotEmpty() }.orEmpty() })
             }
             LAB_NOTE.find(t)?.let { labRooms[it.groupValues[1]] = rooms(it.groupValues[2]) }
+            // ГУЭ, УИР: «Лабораторные занятия:», ниже строками «сокращение … аудитории»
+            if (t.equals("Лабораторные занятия:", true) || t.equals("Лабораторные и практические занятия:", true)) {
+                for (rr in r..minOf(r + 8, headers.first() - 1)) {
+                    val abbr = (c + 1..c + 2).map { sheet.text(rr, it).squash() }.firstOrNull { it.isNotEmpty() && !it.first().isDigit() } ?: if (rr == r) continue else break
+                    val where = (c + 2..c + 6).map { sheet.text(rr, it).squash() }.firstOrNull { it.isNotEmpty() && it.first().isDigit() } ?: continue
+                    labRooms[abbr] = rooms(where)
+                }
+            }
         }
 
         val groups = LinkedHashMap<String, Group>()
         val parts = ArrayList<WeekPart>()
         for ((bi, h) in headers.withIndex()) {
             val bandEnd = minOf(headers.getOrNull(bi + 1) ?: sheet.rowCount, legendRow)
-            val groupRow = (h + 1..minOf(h + 5, bandEnd - 1)).firstOrNull { r -> (0..MAX_COL).any { GROUP.matches(sheet.text(r, it).squash()) } } ?: continue
+            val groupRow = (h + 1..minOf(h + 5, bandEnd - 1)).firstOrNull { r -> (0..MAX_COL).any { groupOf(sheet.text(r, it)) != null } } ?: continue
             val dayCol = (0..5).firstOrNull { sheet.text(h, it).startsWith("День", true) } ?: 0
             val timeCol = (0..5).firstOrNull { sheet.text(h, it).startsWith("Время", true) } ?: (dayCol + 1)
 
             val weeks = (0..MAX_COL).mapNotNull { c ->
                 val m = WEEK.find(sheet.text(h, c).squash()) ?: return@mapNotNull null
-                val cols = generateSequence(c) { it + 1 }.takeWhile { GROUP.matches(sheet.text(groupRow, it).squash()) }.toList()
+                val cols = generateSequence(c) { it + 1 }.takeWhile { groupOf(sheet.text(groupRow, it)) != null }.toList()
                 if (cols.isEmpty()) return@mapNotNull null
-                val names = cols.map { GROUP.find(sheet.text(groupRow, it).squash())!!.groupValues[1].squash() }
+                val names = cols.map { groupOf(sheet.text(groupRow, it))!! }
                 // «01.09.2026 - 05.09.2026» под названием недели
                 val range = (h + 1 until groupRow).firstNotNullOfOrNull { r -> DATE.find(sheet.text(r, c))?.let(::date) }
                 WeekCols(weekNumber(m.groupValues[1]), c - 1, cols, names, range?.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)))
@@ -146,6 +156,10 @@ object TermGridParser {
     private val KIND = Regex("""\(\s*(лаб|л|сз|пз)\.?\s*\)?""", RegexOption.IGNORE_CASE)
     private val CHECK = Regex("""^(диф\.?\s*зач[её]т|зач[её]т|экзамен|консультация)\s+""", RegexOption.IGNORE_CASE)
 
+    private val BARE_ROOM = Regex(""",\s*(?:а\s+)?(\d{3,4}(?:\s*,\s*\d{3,4})*)\s*$""")  // «, 912», «, а 708»
+    /** Сокращение для поиска в списке дисциплин: без пробелов, переносов и точки в конце («Введ_в_⏎спец.» = «Введ_в_спец»). */
+    private fun key(abbr: String) = abbr.lowercase().replace(WS, "").trimEnd('.')
+
     private fun rooms(raw: String): List<String> = raw.split(',', ';').map { it.squash() }.filter { it.isNotEmpty() }
 
     private fun cell(
@@ -158,10 +172,13 @@ object TermGridParser {
         val start = own ?: slot.start
         val end = mergedEnd ?: if (own != null) own.plus(Duration.between(slot.start, slot.end)) else slot.end
 
-        var room = ROOM.find(text)?.let { m -> text = text.removeRange(m.range); rooms(m.groupValues[1]) } ?: emptyList()
+        var room = ROOM.find(text)?.let { m -> text = text.removeRange(m.range); rooms(m.groupValues[1]) }
+            // ГУЭ: аудитория без «а.» — «ПЛ (сз), 912»
+            ?: BARE_ROOM.find(text)?.let { m -> text = text.removeRange(m.range); rooms(m.groupValues[1]) } ?: emptyList()
         val kind = KIND.find(text)?.let { m -> text = text.removeRange(m.range); m.groupValues[1].lowercase() }
         val check = CHECK.find(text.squash())?.let { m -> text = text.squash().substring(m.range.last + 1); m.groupValues[1].lowercase().replace("зачет", "зачёт").squash() }
-        val abbr = text.squash().trim('(', ')', ' ', '.')
+        // «БелЯ (пз), а.912» — после вида занятия запятая перед аудиторией
+        val abbr = text.squash().trim('(', ')', ' ', '.', ',', ';')
         if (abbr.isEmpty()) return null
 
         val type = when (kind) { "л" -> LessonType.LECTURE; "сз" -> LessonType.SEMINAR; "пз" -> LessonType.PRACTICE; "лаб" -> LessonType.LAB; else -> LessonType.OTHER }
@@ -170,7 +187,7 @@ object TermGridParser {
             LessonType.LAB -> labRooms[abbr] ?: emptyList()
             else -> emptyList()
         }
-        val subject = legend.subjects[abbr.lowercase()]
+        val subject = legend.subjects[key(abbr)]
         val key = when { check != null -> if ("зач" in check) "зач" else if ("экз" in check) "экз" else null; else -> kind }
         return Lesson(
             start = start, end = if (end > start) end else slot.end.coerceAtLeast(start),
@@ -208,7 +225,7 @@ object TermGridParser {
                 val abbrCol = col("Сокр") ?: 1
                 val nameCol = col("Полное") ?: (abbrCol + 1)
                 val staffCol = col("преподавател")
-                val known = (0 until top).flatMap { r -> (0..MAX_COL).mapNotNull { GROUP.find(sheet.text(r, it).squash())?.groupValues?.get(1)?.squash() } }.distinct()
+                val known = (0 until top).flatMap { r -> (0..MAX_COL).mapNotNull { groupOf(sheet.text(r, it)) } }.distinct()
                 val out = HashMap<String, Subject>()
                 // данные — сразу под строкой «Сокр. название / Полное название»
                 val first = (head.firstOrNull { r -> sheet.text(r, abbrCol).contains("Сокр", true) } ?: top) + 1
@@ -216,7 +233,7 @@ object TermGridParser {
                     val abbr = sheet.text(r, abbrCol).squash()
                     val name = sheet.text(r, nameCol).squash()
                     if (abbr.isEmpty() || name.isEmpty()) { if (out.isNotEmpty()) break else continue }
-                    out[abbr.lowercase()] = Subject(name, staffCol?.let { staff(sheet.text(r, it), known) } ?: emptyList())
+                    out[key(abbr)] = Subject(name, staffCol?.let { staff(sheet.text(r, it), known) } ?: emptyList())
                 }
                 return Legend(out)
             }
