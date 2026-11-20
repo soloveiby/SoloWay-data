@@ -4,5 +4,5 @@ set -e
 SRC=${1:-../../beta/app/src/main/java/by/solovei/schedule/data}
 DST=src/main/kotlin/by/solovei/schedule/data
 cd "$(dirname "$0")"
-for f in Models.kt ScheduleParser.kt XlsxReader.kt ScheduleJson.kt; do cp "$SRC/$f" "$DST/$f"; done
+for f in Models.kt ScheduleParser.kt XlsxReader.kt ScheduleJson.kt TermGridParser.kt; do cp "$SRC/$f" "$DST/$f"; done
 echo "скопировано из $SRC"

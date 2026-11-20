@@ -18,6 +18,7 @@ import java.time.temporal.ChronoUnit
  * Аргументы: <id> <папка feeds> [<папка sources>]
  */
 fun main(args: Array<String>) {
+    if (args.firstOrNull() == "term") return term(args.drop(1))
     val id = args.getOrNull(0) ?: error("нужен id, например bsu-physics")
     val feeds = File(args.getOrElse(1) { "../feeds" })
     val sources = File(args.getOrElse(2) { "../sources" })
