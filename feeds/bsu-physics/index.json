@@ -1,0 +1,33 @@
+{
+ "courses": [
+  {
+   "name": "1 курс",
+   "groups": 10,
+   "id": "bsu-physics/1"
+  },
+  {
+   "name": "2 курс",
+   "groups": 8,
+   "id": "bsu-physics/2"
+  },
+  {
+   "name": "3 курс",
+   "groups": 8,
+   "id": "bsu-physics/3"
+  },
+  {
+   "name": "4 курс",
+   "groups": 7,
+   "id": "bsu-physics/4"
+  },
+  {
+   "name": "5 курс",
+   "groups": 3,
+   "id": "bsu-physics/5"
+  }
+ ],
+ "format": "soloweek-feed",
+ "id": "bsu-physics",
+ "version": 1,
+ "updatedAt": "2026-11-20T09:47:26Z"
+}

@@ -780,6 +780,8 @@ def main():
         cfg = json.loads(path.read_text(encoding="utf-8"))
         if (only and cfg["id"] != only) or cfg["id"] in skip:
             continue
+        if cfg.get("adapter", "").startswith("kotlin_"):
+            continue  # разбирает Kotlin-программа из kotlin/ (тем же кодом, что в приложении), см. kotlin.yml
         try:
             for line in ADAPTERS[cfg.get("adapter", "pdf_daily_grid")](cfg, offline):
                 print(line)

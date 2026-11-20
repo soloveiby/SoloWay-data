@@ -1,0 +1,29 @@
+{
+ "id": "bsu-physics",
+ "name": "Физфак БГУ",
+ "adapter": "kotlin_gsheet_grid",
+ "page": "https://physics.bsu.by/raspisanie/studentam/",
+ "_courses": "запасной список — если страница не открылась (из-за границы её не открыть: геоблокировка); тот же, что в конфиге приложения",
+ "courses": [
+  {
+   "name": "1 курс",
+   "sheet": "1K0bqsnBNEPKM-b8Y-LGohOLI5y3uBZxnuE7FqOy7zQM"
+  },
+  {
+   "name": "2 курс",
+   "sheet": "13nWJiXukOKM0CzyNDPud87_MECbdh7_YTj7dEi2KVio"
+  },
+  {
+   "name": "3 курс",
+   "sheet": "1Xr4Jhdo_MQdtV024yfqt0ieQop90aDp9rCEovQ8aCYA"
+  },
+  {
+   "name": "4 курс",
+   "sheet": "1xjL8gcukkNKtr-xNCytb-vQwyhXcr52fyNcPce1gePE"
+  },
+  {
+   "name": "5 курс",
+   "sheet": "1WqjUvkRDJJcV73rl1B-z6qoZqBjfJaboKNaxHvZiU94"
+  }
+ ]
+}
