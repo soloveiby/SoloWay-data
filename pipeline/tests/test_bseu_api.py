@@ -38,6 +38,23 @@ def test_group_page():
     assert all(l.weeks and l.title for l in ls)
 
 
+def test_dated_masters_schedule():
+    page = '''<table id="sched">
+    <tr><td colspan="5" class="wday">вторник (24.11.2026)</td></tr>
+    <tr><td>9:45-11:05</td><td colspan="2">Налогообложение <span class="distype">(Лекции)</span>
+    <span class="teacher">Иванов Иван Иванович</span></td><td>1/1106</td></tr>
+    <tr><td colspan="5" class="wday">вторник (1.12.2026)</td></tr>
+    <tr><td>11:15-12:35</td><td colspan="2">Семинар <span class="distype">(Семинары)</span></td><td></td></tr>
+    </table>'''
+    current, lessons = parse_schedule(page)
+    assert current is None
+    assert [(lesson.calendar_day, lesson.weekday, lesson.weeks) for lesson in lessons] == [
+        (date(2026, 11, 24), 1, []), (date(2026, 12, 1), 1, [])]
+    assert (lessons[0].title, lessons[0].type, lessons[0].teachers, lessons[0].rooms) == (
+        "Налогообложение", "LECTURE", ["Иванов И.И."], ["1/1106"])
+    assert lessons[1].start == time(11, 15)
+
+
 def test_all_fixtures_parse():
     for f in FIX.glob("*.html"):
         raw = f.read_bytes()
