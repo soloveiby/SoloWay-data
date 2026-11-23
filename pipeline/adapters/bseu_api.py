@@ -32,6 +32,7 @@ ACT_SCHED = "__id.25.main.inpFldsA.GetSchedule__sp.7.results__fp.4.main"
 WEEKDAYS = ["понедельник", "вторник", "среда", "четверг", "пятница", "суббота", "воскресенье"]
 TIME = re.compile(r"(\d{1,2})[.:](\d{2})\s*[-–—]\s*(\d{1,2})[.:](\d{2})")
 CUR_WEEK = re.compile(r"Текущая\s*-?\s*<strong>\s*(\d+)\s*</strong>\s*учебная неделя")
+CALENDAR_DATE = re.compile(r"\((\d{1,2})\.(\d{1,2})\.(\d{4})\)$")
 TYPES = {
     "лекци": "LECTURE", "практическ": "PRACTICE", "лаборатор": "LAB", "семинар": "SEMINAR",
 }
@@ -50,6 +51,7 @@ class Lesson:
     teachers: list[str]
     rooms: list[str]
     tags: list[str] = field(default_factory=list)
+    calendar_day: date | None = None
 
 
 class Client:
@@ -137,7 +139,7 @@ def _rooms(cell: str) -> list[str]:
 
 
 def parse_schedule(page: str) -> tuple[int | None, list[Lesson]]:
-    """HTML страницы → (текущая учебная неделя, пары на семестр)."""
+    """Разбирает обычную сетку по номерам недель и таблицы с датами занятий."""
     cw = CUR_WEEK.search(page)
     current = int(cw.group(1)) if cw else None
     i = page.find('id="sched"')
@@ -147,6 +149,7 @@ def parse_schedule(page: str) -> tuple[int | None, list[Lesson]]:
     rows = re.findall(r"<tr>(.*?)</tr>", table, re.S)
     lessons: list[Lesson] = []
     day = None
+    calendar_day = None
     head = None          # шапка пары с подгруппами: (время, недели, название, тип, метка, осталось строк)
     for row in rows:
         cells = re.findall(r"<t([dh])([^>]*)>(.*?)</t[dh]>", row, re.S)
@@ -155,7 +158,9 @@ def parse_schedule(page: str) -> tuple[int | None, list[Lesson]]:
         attrs0 = cells[0][1]
         if 'class="wday"' in attrs0:
             name = _text(cells[0][2]).lower()
-            day = WEEKDAYS.index(name) if name in WEEKDAYS else None
+            dated = CALENDAR_DATE.search(name)
+            calendar_day = date(int(dated[3]), int(dated[2]), int(dated[1])) if dated else None
+            day = calendar_day.weekday() if calendar_day else (WEEKDAYS.index(name) if name in WEEKDAYS else None)
             head = None
             continue
         if day is None:
@@ -168,21 +173,23 @@ def parse_schedule(page: str) -> tuple[int | None, list[Lesson]]:
             rooms = _rooms(cells[2][2]) if len(cells) > 2 else []
             n = re.search(r"\d+", sg)
             tags = ([f"{n.group(0)} подгруппа"] if n else [sg]) + ([mark] if mark else [])
-            lessons.append(Lesson(day, st, en, weeks, title, typ, [t for t in teachers if t], rooms, tags))
+            lessons.append(Lesson(day, st, en, weeks, title, typ, [t for t in teachers if t], rooms, tags, calendar_day))
             continue
         tm = TIME.search(_text(cells[0][2]))
-        if not tm or len(cells) < 3:
+        desc = 1 if calendar_day else 2
+        if not tm or len(cells) <= desc:
             continue
         st, en = time(int(tm[1]), int(tm[2])), time(int(tm[3]), int(tm[4]))
-        weeks = parse_weeks(_text(cells[1][2]))
-        title, raw_type, teachers = _desc(cells[2][2])
+        weeks = [] if calendar_day else parse_weeks(_text(cells[1][2]))
+        title, raw_type, teachers = _desc(cells[desc][2])
         typ, mark = _kind(raw_type)
-        if 'colspan="3"' in cells[2][1] and len(cells) == 3:
+        span = 'colspan="2"' if calendar_day else 'colspan="3"'
+        if span in cells[desc][1] and len(cells) == desc + 1:
             head = (st, en, weeks, title, typ, mark)     # дальше пойдут подгруппы
             continue
         head = None
-        rooms = _rooms(cells[3][2]) if len(cells) > 3 else []
-        lessons.append(Lesson(day, st, en, weeks, title, typ, teachers, rooms, [mark] if mark else []))
+        rooms = _rooms(cells[desc + 1][2]) if len(cells) > desc + 1 else []
+        lessons.append(Lesson(day, st, en, weeks, title, typ, teachers, rooms, [mark] if mark else [], calendar_day))
     return current, lessons
 
 
