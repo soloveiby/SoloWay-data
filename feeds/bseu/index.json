@@ -2,7 +2,7 @@
  "format": "soloweek-feed",
  "version": 1,
  "id": "bseu",
- "week1": "2026-08-24",
+ "week1": "2026-08-31",
  "faculties": [
   {
    "id": "12",
@@ -324,5 +324,5 @@
    ]
   }
  ],
- "updatedAt": "2026-11-22T20:57:32Z"
+ "updatedAt": "2026-11-23T11:56:42Z"
 }
