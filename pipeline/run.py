@@ -263,7 +263,8 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
                             continue
                         if cur: meta["currentWeek"] = cur; meta["currentWeekAt"] = today.isoformat()
                         data = [dict(d=l.weekday, s=l.start.strftime("%H:%M"), e=l.end.strftime("%H:%M"), w=l.weeks, t=l.title,
-                                     k=l.type, p=l.teachers, r=l.rooms, g=l.tags) for l in lessons]
+                                     k=l.type, p=l.teachers, r=l.rooms, g=l.tags,
+                                     **({"date": l.calendar_day.isoformat()} if l.calendar_day else {})) for l in lessons]
                         if dump(gdir / f"{gid}.json", data): log.append(f"{sid}: обновлена {name}")
                         seen[gid] = {"name": name, "spec": spec, "fac": fac_id, "course": int(co["value"])}
         if failures and not any(groups_meta.get(g) is not v for g, v in seen.items()):
@@ -302,12 +303,21 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
             gids.sort(key=lambda g: groups_meta[g]["name"])
             groups = [{"index": i, "name": groups_meta[g]["name"], "code": "", "specialty": groups_meta[g]["spec"], "profiles": []} for i, g in enumerate(gids)]
             per_group = [json.loads((gdir / f"{g}.json").read_text(encoding="utf-8")) if (gdir / f"{g}.json").exists() else [] for g in gids]
-            max_week = max([w for lessons in per_group for l in lessons for w in l["w"]] or [1])
+            week_numbers = [1]
+            sundays = set()
+            for lessons in per_group:
+                for lesson in lessons:
+                    if "date" in lesson:
+                        week_offset, lesson["d"] = divmod((date.fromisoformat(lesson["date"]) - week1).days, 7)
+                        lesson["w"] = [week_offset + 1]
+                    week_numbers.extend(lesson["w"])
+                    if lesson["d"] == 6:
+                        sundays.update(lesson["w"])
             weeks = []
-            for wk in range(1, max_week + 1):
+            for wk in range(min(week_numbers), max(week_numbers) + 1):
                 monday = week1 + timedelta(weeks=wk - 1)
                 days = []
-                for d in range(6):
+                for d in range(7 if wk in sundays else 6):
                     per: dict[str, list] = {}
                     for gi, lessons in enumerate(per_group):
                         for l in lessons:
@@ -318,7 +328,8 @@ def run_bseu(cfg: dict, offline: bool) -> list[str]:
                                     "cancelled": False, "sharedWith": [gi]})
                     for v in per.values(): v.sort(key=lambda x: (x["start"], x["tags"]))
                     days.append({"date": (monday + timedelta(days=d)).isoformat(), "lessons": per})
-                weeks.append({"title": f"Неделя {wk} · " + week_title([monday, monday + timedelta(days=5)]), "groups": groups, "days": days})
+                label = week_title([monday, date.fromisoformat(days[-1]["date"])])
+                weeks.append({"title": f"Неделя {wk} · {label}" if wk > 0 else label, "groups": groups, "days": days})
             if dump(ROOT / "feeds" / f"{sid}-{fac['slug']}" / f"{course}.json", {"format": "soloweek-schedule", "version": 1, "weeks": weeks}, compact=True):
                 log.append(f"{sid}: {fac['name']}, {course} курс — файл обновлён")
             courses.append({"name": f"{course} курс", "id": f"{sid}-{fac['slug']}/{course}", "groups": len(gids)})
