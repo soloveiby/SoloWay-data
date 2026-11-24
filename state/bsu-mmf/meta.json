@@ -2,47 +2,47 @@
  "pages": {
   "1-1-gruppa": {
    "course": 1,
-   "sha": "f9daf462aeb9586b73a04dcdba3472c1e276964ff633e42334a7fa8bed1b720d"
+   "sha": "61b5e9ecc9f22da1cfafaccd36f049fc0c6d5e05be722eb476c635e02217cd0b"
   },
   "1-2-gruppa": {
    "course": 1,
-   "sha": "57be24d488f658352ab1d92a529d2bc08566fff163f62e18f915c664e4d97297"
+   "sha": "13c679ce8b4964b47fccb6ede0f64c9166caef5eb625cc3e721957291c52c0d0"
   },
   "1-3-gruppa": {
    "course": 1,
-   "sha": "37dfe9b895856910b54fec95b44c3c24d45523dd00056378b44228423fd478d7"
+   "sha": "afb34b524443bfb2481dea8ad7420a0748723f1f5e95a0c0d85e8ca812aedd95"
   },
   "1-4-gruppa": {
    "course": 1,
-   "sha": "9a7dda4fe3076083c9f3aa09cc803abef730d6fa15b7c397021e43a0f13548b7"
+   "sha": "68e8dd5b4541857caca1229f102569a0b9b7949adf194d4c81db003d060e36f5"
   },
   "1-5-gruppa": {
    "course": 1,
-   "sha": "89ccfb9b1cc1a5936f7a00824a21b0eee387fe10f1b01873a3af7d96b526d0c8"
+   "sha": "59f2a15656eaa3bbbf2879bf99934cf1a03dd743961ec859c02f9d8458330d4b"
   },
   "1-6-gruppa": {
    "course": 1,
-   "sha": "be6acf93cab90bf34b9697c6c572e99004050f655a552f196b1d8a5de4bd45f2"
+   "sha": "5b0a48be1b7838d0e19f58f9c86bf8a40364537fb4d70b282038fb8ad9a3a6cc"
   },
   "1-7-gruppa": {
    "course": 1,
-   "sha": "ffa9334286cf4cfa3096dfb3b3a647e3c06ec22ced901fe3369cf1baf1bc7ccd"
+   "sha": "aed9ca255a945a27947b6bffa282fba77e96cff25f2ed66e31113dced5886fc8"
   },
   "1-8-gruppa": {
    "course": 1,
-   "sha": "95b30662302fe170e13e00a82fa7d72e068ea78bdc5f8aeaa429095b86fef5a1"
+   "sha": "c6264d21f094ee04a133c4d54677a4c1dd845c5a4c2c9d62e98df8e9e6efe7a7"
   },
   "1-9-gruppa": {
    "course": 1,
-   "sha": "4d6fce0bd29556954d274cd85a62ab14b2a8b4764419bf29fd3975ec9fd91e28"
+   "sha": "7be0cb3a583c8bbbb59f2fd5637980497a2b22e1afa40f1161bf835cae78fbd0"
   },
   "1-10-gruppa": {
    "course": 1,
-   "sha": "bffa2769086f5acfdc592b595ce65a3e257e9a6106fd18512f9ee23eae6a2f6d"
+   "sha": "298708ecd1636933fbbb3c4704018a27e759c70c0fdb871eb14949bcbf906502"
   },
   "1-11-gruppa": {
    "course": 1,
-   "sha": "c1d3b542d3e538ac9194fc632fdd588ab6c8dacc2ca36dafb3a83ffc0415adc3"
+   "sha": "a60b15e90d6c407dcc334d91d9d13ef0bccc304f879470d68c58864707478009"
   },
   "1-vf": {
    "course": 1,
@@ -50,51 +50,51 @@
   },
   "2-1-gruppa": {
    "course": 2,
-   "sha": "3957ee7d4880f2b22ee73350ca0c96a415fbaad00d1def57975b6fe4a9d07e32"
+   "sha": "3576825842ed399a2083562f6c8a7de232ab05b77b6f7d0e49dd5abcc2fd8025"
   },
   "2-2-gruppa": {
    "course": 2,
-   "sha": "f6838cd8aafb315a4987810c4e4b0228e8bfbbc64a96cbfcaffe37da2fa0df15"
+   "sha": "60fe92ad3d221fbed3127aced7e5cb0bb4d57c2cd31ada634edc71fb3e2522ed"
   },
   "2-3-gruppa": {
    "course": 2,
-   "sha": "4bb1a425493e7af719094e3a7d64b897114c73dad724dfb9741a289d236c7e5f"
+   "sha": "935f37c098e32cc4188a8aeddec8b7928a1f47935362e322b48cafda3cbcfc17"
   },
   "2-4-gruppa": {
    "course": 2,
-   "sha": "615cb7382e59374d802316f261645450c101b9a6514e2db0f9e13500791eda4b"
+   "sha": "456835c17c3e81a3c4ad6fb931ba35edb35f14a2c6576b4c87644eedce4a43d3"
   },
   "2-5-gruppa": {
    "course": 2,
-   "sha": "9dd8cb6165af5c8eb34ad392a03cc1833685c55f3dcd07d04649bea32681ffa5"
+   "sha": "40bed15dbd9705aa2674378a0452fdc051a53f031e45e99f5177f8cecfd467f7"
   },
   "2-6-gruppa": {
    "course": 2,
-   "sha": "185219c359ca8f8721130497cdd8abe07d309d0e5114017cead677be7cdbf7a6"
+   "sha": "b9cabee262229e78249f2f0e4dc5e94d91a35c3a85c5d60a484725f2316e2c67"
   },
   "2-7-gruppa": {
    "course": 2,
-   "sha": "6973c787dade3b26dc84e6c77973c8a31988701acc81b4ddd84c0dd4801b2c16"
+   "sha": "bfb63f495705330280470e842dfc779207da5b4773f947c3362aa2fec5673eb5"
   },
   "2-8-gruppa": {
    "course": 2,
-   "sha": "2258230b7b94f57cfd3106396132283c28580df075df9defb49af1853d8ee6ca"
+   "sha": "4160c548b56c925c8d571302ffa335394c1b4c85052fcd820ad62cc27a06667a"
   },
   "2-9-gruppa": {
    "course": 2,
-   "sha": "ec5280830b77fffe20da295e0e55020d64bf188c6b6b25372a1d62450f318df4"
+   "sha": "5762bcc9a7786e6c0bea90a6e4d5dcd73f436a4be221015aa5a1291f024abbcb"
   },
   "2-10-gruppa": {
    "course": 2,
-   "sha": "117fce55a372c62dccd48894046ffacd47dcac3c5b2d5a9126929dee0bd5d6d5"
+   "sha": "f5a60f7fb39f60146895ec11bcdadea087a563eedf6d405042f7e2240b3f2f3a"
   },
   "2-11-gruppa": {
    "course": 2,
-   "sha": "609e07daee0154aed80f841f9eef26e5dbc9ea9e080cf769aa199dfe02243297"
+   "sha": "de13b798d210b43a431a3345f3c39fcb715be6f886246d907109a807b9ee5d9e"
   },
   "2-12-gruppa": {
    "course": 2,
-   "sha": "1f4bc7cc3517b11cc6f325a98c7688ad65af8641342dd3084d5459f1e05f7259"
+   "sha": "7f853c590f392f0abbfc7840b6dfd7d28511d4a9396ebc09d2ca4036e85bd4a9"
   },
   "2-vf": {
    "course": 2,
@@ -102,43 +102,43 @@
   },
   "3-1-gruppa": {
    "course": 3,
-   "sha": "76f65eea710e2fea772b652da67e28fc7c8cf26db6180626bdd96fe0ef2fbd8f"
+   "sha": "35996215bdd1f3cc2331c320da7b7da97e08b6b4d483296b41d94a9dd7e3b222"
   },
   "3-2-gruppa": {
    "course": 3,
-   "sha": "7173712fb5f4b5cd8d3edf0671a6708bb75be839dfff9de07131578e2eed88b7"
+   "sha": "0953ed360adb2e6e1a2d977081e638b163a9dd643d707a5754880a7050a1cb49"
   },
   "3-3-gruppa": {
    "course": 3,
-   "sha": "466be207ec75c7412342b09bfeef039d9ef1d6cec11562f0b90db5a4b85f16d0"
+   "sha": "be0a8e406e15c57371099e88b22a26f32e7c784268e16f307c1bac6be2e72c08"
   },
   "3-4-gruppa": {
    "course": 3,
-   "sha": "8a614c0e8020832021272dc4671f08694be3edffe3093ab8d216782b67c52141"
+   "sha": "0c8f4ffea10232012b5ee9edde409c05b47bfea6c87e2fc3e92b1a020ca6be1d"
   },
   "3-5-gruppa": {
    "course": 3,
-   "sha": "6cd0c28b7e247b4ab9bd7af31072ae0b2968b613b6c5527df63f3add46469fd8"
+   "sha": "220d6ac99101bb1aa66bc0848ca49ea887ff7da813bc59d8584edfaef7a50820"
   },
   "3-6-gruppa": {
    "course": 3,
-   "sha": "ce916cfbe5c4dc90feb55e32ecad61e4ad417c4aea09d4cbcfeee26b753e3172"
+   "sha": "d28136ee5a867ce4811b9533aa7011e71acfa810044498d9710a986a8b23a881"
   },
   "3-7-gruppa": {
    "course": 3,
-   "sha": "f6af46f89415bbe87770495200503ce067b5cc3533e6959dace690afdb6a5ce6"
+   "sha": "8c0e0f853b437a1b60fd3b12e35afba352f1e3790024eb88e401d7acc1169aa4"
   },
   "3-8-gruppa": {
    "course": 3,
-   "sha": "d0f91ae5ac07fe5f2c97cb82af031dd2df44b90adb1b1b9b9ccca61a06626d7c"
+   "sha": "428b54f63eddf59940494b14e9ae2a36aa502f472a29f17b058af4989bdf0536"
   },
   "3-9-gruppa": {
    "course": 3,
-   "sha": "38deacf72bb2105ad472171f831c6a2fbb9451a5668f1fee9d2cbb8dd834c686"
+   "sha": "391d531113726ababdc7b83e80bc979786fc2b0de2d73bf9ef367091ebdcc6ee"
   },
   "3-11-gruppa": {
    "course": 3,
-   "sha": "e2f655908748758b91cb147bbc7579e042b552ba8cd89a0e001975c79bc17e3b"
+   "sha": "709a5172f1cfd3ee9459b26f5789244b9a1709e0a6c6992507b3ef7cc976dacb"
   },
   "3-vf": {
    "course": 3,
@@ -146,49 +146,49 @@
   },
   "4-1-gruppa": {
    "course": 4,
-   "sha": "be5e4b5c9aec4c04082745dd1b121af09d3989c407b9b58fec226ce76c0dd15f"
+   "sha": "55cafbdba2d3a3fd34747abcd4026fe6d2025ef756bab379c951272b83e19dae"
   },
   "4-2-gruppa": {
    "course": 4,
-   "sha": "49b397ae572cdcd65371ecd17b51f18a5895eafa23ab694635fd10efe682cd51"
+   "sha": "942eda6e7158d18406ba05082d46e920492450fa95d7c217ee393ba7f474d7e7"
   },
   "4-3-gruppa": {
    "course": 4,
-   "sha": "fa1f9099386231f86e13d4d17b41ac5fc40683f486bc3eca247685cf37b3b034"
+   "sha": "8abc0f93f64fa018612be47cb701d110b6eae4a9ec5dc8f12c823655f37829e9"
   },
   "4-4-gruppa": {
    "course": 4,
-   "sha": "ab22802ec7e3f5cbe6152c0a04ea09a1a67c176b56b5dac3a17146539a433c63"
+   "sha": "f099a2eca64e3979746f294aee18513b40c1389a1bede0de497b9a58423e7c5e"
   },
   "4-5-gruppa": {
    "course": 4,
-   "sha": "2f80b3c0e9c42c9d60bb7cd6ee7d03e923e49ece1c35d1c063d6e9bf9a0b7d18"
+   "sha": "5bbdf50b5ae3b8c684d46d9912fa756b5c689ded4551be658447738029cf9b3e"
   },
   "4-6-gruppa": {
    "course": 4,
-   "sha": "72b9654ff6e8d0aba0aafa7c36cc752d9c2ec470e776266ee8e03063ed50a7ee"
+   "sha": "9be7e0b48a181d5e1ffdca78b48b90e990830595f7a8c4db3841a146eda79fd5"
   },
   "4-7-gruppa": {
    "course": 4,
-   "sha": "b451f70809781e0013a09f7bdedf863fff0fbf6f7c52f6648699a38b68bab0e4"
+   "sha": "e3a0f6554a5981d2369c333ddfd254b4de9459dd3da07bff28cb7269abe37af2"
   },
   "4-8-gruppa": {
    "course": 4,
-   "sha": "451cf661b144d5bdb3a1ad5a42fb56ec436607714257c6b50db1b0cef033950a"
+   "sha": "60e48544cf12fb9ada09d6a9adab05168ee611cddda31edbded40337c6661811"
   },
   "4-9-gruppa": {
    "course": 4,
-   "sha": "440638a9f78f8fdb3aa9fcbc8fafe682ac53517bc56d5ae9a37be392851911f2"
+   "sha": "3a8b03b1151d6129c524a9ea293a8bb838f0fe823a065c6fe11a699475b60662"
   },
   "4-10-gruppa": {
    "course": 4,
-   "sha": "a1484a787cb64f70663b6eb8c55bf85e9f5f827abf43a367377862f96db486e4"
+   "sha": "b004f12dc14ff608c8858b27a9d109acdfcae0ad9257f6599da0c9344cb5ce7a"
   },
   "4-vf": {
    "course": 4,
-   "sha": "3fe28b432b7947a5a9df4590b32ba7a971da0f1acd6f68669c3ee7ea99a211a1"
+   "sha": "2c755158780df01d8adc09925c89be5a7c46366a1945808a80244306fdda9dbd"
   }
  },
- "lastOk": "2026-11-24T01:59:39.493194+00:00",
- "lastRun": "2026-11-24T01:56:13.190935+00:00"
+ "lastOk": "2026-11-24T22:44:55.925518+00:00",
+ "lastRun": "2026-11-24T22:42:46.260436+00:00"
 }
