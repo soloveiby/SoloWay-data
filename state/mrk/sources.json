@@ -68,7 +68,11 @@
   "sha": "5a38aaaa5e1fce8d0f28c5022a5b443756ab992a39e9baa6916292f235b242b7"
  },
  "2026-11-25": {
-  "url": "https://mrk.bsuir.by/mediafiles/schedule/25.11.2026-f39be904-00a6-4255-8228-e0e340972303.pdf",
-  "sha": "2c46630ba18e1cb2d27a86efef8b57fac218bbb0644039281d632db89e415a20"
+  "url": "https://mrk.bsuir.by/mediafiles/schedule/25.11.2026-510e7f3d-f6f0-45e3-8482-a7ff83237d3b.pdf",
+  "sha": "30a3372c82d5468237a139762475b9744b9edabb131a45d04236ebe567bd9f87"
+ },
+ "2026-11-26": {
+  "url": "https://mrk.bsuir.by/mediafiles/schedule/26.11.2026-dc7d456c-facb-4f98-8740-dfb0b5502de3.pdf",
+  "sha": "e024c9cd79dc0bf980cc5c24937a696bad8a6cb838083ce2bb0c950d1b6eb611"
  }
 }
